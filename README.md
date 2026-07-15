@@ -1,8 +1,8 @@
-# 公众号AI智能运营系统 V2.2
+# 公众号AI智能运营系统 V2.2.1
 
 > 🚀 AI 驱动的微信公众号内容创作与自动发布系统
 
-[![Version](https://img.shields.io/badge/version-2.2.0-blue)](https://github.com)
+[![Version](https://img.shields.io/badge/version-2.2.1-blue)](https://github.com)
 [![Python](https://img.shields.io/badge/python-3.12+-green)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-orange)](LICENSE)
 
@@ -100,7 +100,7 @@ python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000
 
 ## 📖 文档
 
-- [安装教程](docs/客户安装教程_v2.2.md)
+- [安装教程](docs/客户安装教程_v2.2.1.md)
 - [使用手册](docs/使用手册.md)
 - [故障排查](docs/故障排查.md)
 

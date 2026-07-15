@@ -1,12 +1,12 @@
 ﻿# -*- coding: utf-8 -*-
-"""Web UI - Single Page Application (V2.2 RC)"""
+"""Web UI - Single Page Application (V2.2.1)"""
 WEB_PAGE_HTML = r"""
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>公众号AI运营系统 v2.2</title>
+<title>公众号AI运营系统 v2.2.1</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f0f2f5;color:#333;min-height:100vh}
