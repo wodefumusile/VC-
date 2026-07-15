@@ -40,10 +40,10 @@ echo    [OK] pip 可用
 REM ==== Step 3: Install Python dependencies ====
 echo [3/6] 安装 Python 依赖包（可能需要几分钟）...
 echo     （如遇到网络问题，自动切换国内镜像源）
-pip install -r appequirements.txt -q 2>nul
+pip install -r app\requirements.txt -q 2>nul
 if %errorlevel% neq 0 (
     echo     正在使用清华镜像源重试...
-    pip install -r appequirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple -q
+    pip install -r app\requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple -q
     if %errorlevel% neq 0 (
         echo [X] 依赖安装失败，请检查网络连接后重新运行
         pause
