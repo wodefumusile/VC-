@@ -1,0 +1,11 @@
+{
+  "name": "商务专业",
+  "description": "蓝色标题，简洁专业，适合企业/商务内容",
+  "h1_color": "#1a3c6e",
+  "h2_color": "#2c5aa0",
+  "body_color": "#333333",
+  "body_size": "15px",
+  "line_height": "1.9",
+  "img_style": "max-width:100%;border-radius:4px",
+  "footer_text": "— END —"
+}

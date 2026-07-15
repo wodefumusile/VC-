@@ -1,0 +1,1257 @@
+[
+  {
+    "name": "公众号AI运营-V4",
+    "nodes": [
+      {
+        "id": "7c767941",
+        "name": "WK-Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2.1,
+        "position": [
+          0,
+          200
+        ],
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "article-v4-prod",
+          "responseMode": "lastNode",
+          "options": {}
+        },
+        "webhookId": "v4-main"
+      },
+      {
+        "id": "f161b39f",
+        "name": "WK-Schedule",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.1,
+        "position": [
+          -200,
+          200
+        ],
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "0 9 * * *"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "70101da3",
+        "name": "WK-Topics",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -200,
+          320
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const t = $json.topics || [\"AI趋势\",\"数字化转型\",\"中小企业AI\"];\nconst arr = Array.isArray(t) ? t : [t];\nreturn arr.map(topic => ({ json: { topic, publishMode: $json.publishMode || \"manual\" } }));"
+        }
+      },
+      {
+        "id": "bca8def3",
+        "name": "KB-Knowledge",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          280,
+          200
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const i=$input.first().json;const t=i.topic||\"AI\";const p=i.publishMode||\"manual\";const b={name:\"你的品牌名\",slogan:\"你的Slogan\",industry:\"你的行业\",targetAudience:\"25-40岁职场人群\",toneOfVoice:\"专业、深度、亲和\",products:[\"产品A\",\"产品B\"],forbidden:[\"政治敏感\",\"虚假承诺\",\"绝对化用语\",\"医疗断言\"],styleGuide:\"每段不超过4行，适度emoji\"};const k=[\"你是\"+b.name+\"的官方公众号写手。\",\"品牌定位：\"+b.slogan,\"所在行业：\"+b.industry,\"目标用户：\"+b.targetAudience,\"品牌语气：\"+b.toneOfVoice,\"核心产品：\"+b.products.join(\"、\"),\"写作规范：\"+b.styleGuide,\"内容红线：\"+b.forbidden.join(\"、\")].join(\"\\n\");return[{json:{topic:t,publishMode:p,brand:b,kbContext:k}}];"
+        }
+      },
+      {
+        "id": "28928089",
+        "name": "A1-Build",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          560,
+          200
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const c=$input.first().json;const s=(c.kbContext||\"\").replace(/\\\\/g,\"\\\\\\\\\").replace(/\"/g,'\\\\\"').replace(/\\n/g,\"\\\\n\");return[{json:{...c,safeKb:s,safeTopic:c.topic}}];"
+        }
+      },
+      {
+        "id": "4cffb496",
+        "name": "A1-HTTP",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          840,
+          200
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.deepseek.com/v1/chat/completions",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "{\"model\":\"deepseek-chat\",\"messages\":[{\"role\":\"system\",\"content\":\"你是资深行业分析师。分析行业趋势与机会。输出JSON:{\"trends\":\"...\"}\"},{\"role\":\"user\",\"content\":\"主题：{{ $json.safeTopic }}\\n品牌：{{ $json.safeKb }}\\n请按JSON格式输出。\"}],\"temperature\":0.7,\"max_tokens\":4096}",
+          "options": {
+            "timeout": 120000,
+            "retryOnFail": true,
+            "maxTries": 3
+          }
+        },
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "v4NGHjMTbhKP7DE4",
+            "name": "DeepSeek API"
+          }
+        }
+      },
+      {
+        "id": "315006e2",
+        "name": "A1-Extract",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1120,
+          200
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const r=$input.first().json;let t=(r.choices||[])[0]?.message?.content||r.message?.content||\"{}\";try{t=t.replace(/```json\\n?/g,\"\").replace(/```\\n?/g,\"\").trim();var p=JSON.parse(t)}catch(e){var p={}}const c=$input.first().json;return[{json:{...c,...p}}];"
+        }
+      },
+      {
+        "id": "5581b6df",
+        "name": "A2-Build",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1400,
+          200
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const c=$input.first().json;const s=(c.kbContext||\"\").replace(/\\\\/g,\"\\\\\\\\\").replace(/\"/g,'\\\\\"').replace(/\\n/g,\"\\\\n\");return[{json:{...c,safeKb:s,safeTopic:c.topic}}];"
+        }
+      },
+      {
+        "id": "4e62be7d",
+        "name": "A2-HTTP",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1680,
+          200
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.deepseek.com/v1/chat/completions",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "{\"model\":\"deepseek-chat\",\"messages\":[{\"role\":\"system\",\"content\":\"你是用户研究专家。输出用户画像。输出JSON:{\"persona\":\"...\"}\"},{\"role\":\"user\",\"content\":\"主题：{{ $json.safeTopic }}\\n品牌：{{ $json.safeKb }}\\n请按JSON格式输出。\"}],\"temperature\":0.7,\"max_tokens\":4096}",
+          "options": {
+            "timeout": 120000,
+            "retryOnFail": true,
+            "maxTries": 3
+          }
+        },
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "v4NGHjMTbhKP7DE4",
+            "name": "DeepSeek API"
+          }
+        }
+      },
+      {
+        "id": "7000d877",
+        "name": "A2-Extract",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1960,
+          200
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const r=$input.first().json;let t=(r.choices||[])[0]?.message?.content||r.message?.content||\"{}\";try{t=t.replace(/```json\\n?/g,\"\").replace(/```\\n?/g,\"\").trim();var p=JSON.parse(t)}catch(e){var p={}}const c=$input.first().json;return[{json:{...c,...p}}];"
+        }
+      },
+      {
+        "id": "11150a10",
+        "name": "A3-Build",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2240,
+          200
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const c=$input.first().json;const s=(c.kbContext||\"\").replace(/\\\\/g,\"\\\\\\\\\").replace(/\"/g,'\\\\\"').replace(/\\n/g,\"\\\\n\");return[{json:{...c,safeKb:s,safeTopic:c.topic}}];"
+        }
+      },
+      {
+        "id": "e63e3e5e",
+        "name": "A3-HTTP",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          2520,
+          200
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.deepseek.com/v1/chat/completions",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "{\"model\":\"deepseek-chat\",\"messages\":[{\"role\":\"system\",\"content\":\"你是内容策划。规划5-8章结构。输出JSON:{\"titles\":[\"...\"],\"outline\":[{\"section\":\"...\",\"words\":300}],\"keywords\":[\"...\"]}\"},{\"role\":\"user\",\"content\":\"主题：{{ $json.safeTopic }}\\n品牌：{{ $json.safeKb }}\\n请按JSON格式输出。\"}],\"temperature\":0.7,\"max_tokens\":4096}",
+          "options": {
+            "timeout": 120000,
+            "retryOnFail": true,
+            "maxTries": 3
+          }
+        },
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "v4NGHjMTbhKP7DE4",
+            "name": "DeepSeek API"
+          }
+        }
+      },
+      {
+        "id": "f126ae0a",
+        "name": "A3-Extract",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          2800,
+          200
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const r=$input.first().json;let t=(r.choices||[])[0]?.message?.content||r.message?.content||\"{}\";try{t=t.replace(/```json\\n?/g,\"\").replace(/```\\n?/g,\"\").trim();var p=JSON.parse(t)}catch(e){var p={}}const c=$input.first().json;return[{json:{...c,...p}}];"
+        }
+      },
+      {
+        "id": "a35dd749",
+        "name": "A4-Build",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          3080,
+          200
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const c=$input.first().json;const s=(c.kbContext||\"\").replace(/\\\\/g,\"\\\\\\\\\").replace(/\"/g,'\\\\\"').replace(/\\n/g,\"\\\\n\");return[{json:{...c,safeKb:s,safeTopic:c.topic}}];"
+        }
+      },
+      {
+        "id": "99f30ab2",
+        "name": "A4-HTTP",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          3360,
+          200
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.deepseek.com/v1/chat/completions",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "{\"model\":\"deepseek-chat\",\"messages\":[{\"role\":\"system\",\"content\":\"你是公众号写手。写2000-4000字Markdown。输出JSON:{\"markdown\":\"...\",\"title\":\"...\"}\"},{\"role\":\"user\",\"content\":\"主题：{{ $json.safeTopic }}\\n品牌：{{ $json.safeKb }}\\n请按JSON格式输出。\"}],\"temperature\":0.7,\"max_tokens\":4096}",
+          "options": {
+            "timeout": 120000,
+            "retryOnFail": true,
+            "maxTries": 3
+          }
+        },
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "v4NGHjMTbhKP7DE4",
+            "name": "DeepSeek API"
+          }
+        }
+      },
+      {
+        "id": "208adf88",
+        "name": "A4-Extract",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          3640,
+          200
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const r=$input.first().json;let t=(r.choices||[])[0]?.message?.content||r.message?.content||\"{}\";try{t=t.replace(/```json\\n?/g,\"\").replace(/```\\n?/g,\"\").trim();var p=JSON.parse(t)}catch(e){var p={}}const c=$input.first().json;return[{json:{...c,...p}}];"
+        }
+      },
+      {
+        "id": "599b4c0c",
+        "name": "A5-Build",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          3920,
+          200
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const c=$input.first().json;const s=(c.kbContext||\"\").replace(/\\\\/g,\"\\\\\\\\\").replace(/\"/g,'\\\\\"').replace(/\\n/g,\"\\\\n\");return[{json:{...c,safeKb:s,safeTopic:c.topic}}];"
+        }
+      },
+      {
+        "id": "9baefdab",
+        "name": "A5-HTTP",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          4200,
+          200
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.deepseek.com/v1/chat/completions",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "{\"model\":\"deepseek-chat\",\"messages\":[{\"role\":\"system\",\"content\":\"你是SEO专家。优化标题关键词摘要。输出JSON:{\"title\":\"...\",\"summary\":\"...\",\"keywords\":[\"...\"]}\"},{\"role\":\"user\",\"content\":\"主题：{{ $json.safeTopic }}\\n品牌：{{ $json.safeKb }}\\n请按JSON格式输出。\"}],\"temperature\":0.7,\"max_tokens\":4096}",
+          "options": {
+            "timeout": 120000,
+            "retryOnFail": true,
+            "maxTries": 3
+          }
+        },
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "v4NGHjMTbhKP7DE4",
+            "name": "DeepSeek API"
+          }
+        }
+      },
+      {
+        "id": "1c4a5af9",
+        "name": "A5-Extract",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          4480,
+          200
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const r=$input.first().json;let t=(r.choices||[])[0]?.message?.content||r.message?.content||\"{}\";try{t=t.replace(/```json\\n?/g,\"\").replace(/```\\n?/g,\"\").trim();var p=JSON.parse(t)}catch(e){var p={}}const c=$input.first().json;return[{json:{...c,...p}}];"
+        }
+      },
+      {
+        "id": "59feea8d",
+        "name": "A6-Build",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          4760,
+          200
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const c=$input.first().json;const s=(c.kbContext||\"\").replace(/\\\\/g,\"\\\\\\\\\").replace(/\"/g,'\\\\\"').replace(/\\n/g,\"\\\\n\");return[{json:{...c,safeKb:s,safeTopic:c.topic}}];"
+        }
+      },
+      {
+        "id": "3dacf7cf",
+        "name": "A6-HTTP",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          5040,
+          200
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "https://api.deepseek.com/v1/chat/completions",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendHeaders": true,
+          "headerParameters": {
+            "parameters": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          },
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "{\"model\":\"deepseek-chat\",\"messages\":[{\"role\":\"system\",\"content\":\"你是审核专家。打分检查质量。输出JSON:{\"score\":5,\"passed\":true,\"issues\":[],\"suggestions\":[]}\"},{\"role\":\"user\",\"content\":\"主题：{{ $json.safeTopic }}\\n品牌：{{ $json.safeKb }}\\n请按JSON格式输出。\"}],\"temperature\":0.7,\"max_tokens\":4096}",
+          "options": {
+            "timeout": 120000,
+            "retryOnFail": true,
+            "maxTries": 3
+          }
+        },
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "v4NGHjMTbhKP7DE4",
+            "name": "DeepSeek API"
+          }
+        }
+      },
+      {
+        "id": "a36981ec",
+        "name": "A6-Extract",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          5320,
+          200
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const r=$input.first().json;let t=(r.choices||[])[0]?.message?.content||r.message?.content||\"{}\";try{t=t.replace(/```json\\n?/g,\"\").replace(/```\\n?/g,\"\").trim();var p=JSON.parse(t)}catch(e){var p={}}const c=$input.first().json;return[{json:{...c,...p}}];"
+        }
+      },
+      {
+        "id": "97bd58e3",
+        "name": "WC-Build",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          5600,
+          200
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const c=$input.first().json;const m=(c.markdown||\"\").substring(0,5000);return[{json:{content:m,...c}}];"
+        }
+      },
+      {
+        "id": "1e2fcbe7",
+        "name": "WC-HTTP",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          5880,
+          200
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "http://wordscheck:8080/wordscheck",
+          "sendBody": true,
+          "specifyBody": "string",
+          "body": "={\"content\": \"{{ $json.content }}\"}",
+          "options": {
+            "timeout": 15000,
+            "retryOnFail": true,
+            "maxTries": 3
+          }
+        }
+      },
+      {
+        "id": "4de03ab4",
+        "name": "WC-IF",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          6160,
+          200
+        ],
+        "parameters": {
+          "conditions": {
+            "options": {
+              "loose": true
+            },
+            "conditions": [
+              {
+                "leftValue": "={{ $json.violations }}",
+                "rightValue": true,
+                "operator": {
+                  "type": "boolean",
+                  "operation": "equals"
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "e0d46635",
+        "name": "WC-Notify",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          6440,
+          120
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "={{ $env.NOTIFY_WEBHOOK_URL || 'https://httpbin.org/post' }}",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "{\"msgtype\":\"text\",\"text\":{\"content\":\"违规: {{ $json.title }}\"}}",
+          "options": {
+            "timeout": 15000
+          }
+        }
+      },
+      {
+        "id": "3c3f0882",
+        "name": "MD-HTML",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          5880,
+          200
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const i=$input.first().json;let m=i.markdown||\"\";m=m.replace(/&/g,\"&amp;\").replace(/</g,\"&lt;\").replace(/>/g,\"&gt;\");m=m.replace(/^### (.+)$/gm,\"<h3>$1</h3>\");m=m.replace(/^## (.+)$/gm,\"<h2>$1</h2>\");m=m.replace(/^# (.+)$/gm,\"<h1>$1</h1>\");m=m.replace(/\\*\\*(.+?)\\*\\*/g,\"<strong>$1</strong>\");m=m.replace(/\\*(.+?)\\*/g,\"<em>$1</em>\");m=m.replace(/`([^`]+)`/g,\"<code>$1</code>\");m=m.replace(/\\[([^\\]]+)\\]\\(([^)]+)\\)/g,'<a href=\"$2\">$1</a>');m=m.replace(/^---$/gm,\"<hr/>\");m=m.replace(/^(\\s*)[-*] (.+)$/gm,\"$1<li>$2</li>\");m=m.replace(/((?:<li>.*<\\/li>\\n?)+)/g,\"<ul>\\n$1</ul>\\n\");const ls=m.split(\"\\n\");let h=\"\";for(const l of ls){const t=l.trim();if(t===\"\"){h+=\"<br/>\";continue}if(/^<[\\/a-z]/.test(t)){h+=l+\"\\n\";continue}h+=\"<p>\"+t+\"</p>\\n\"}return[{json:{html:h,title:i.title||\"AI\",summary:i.summary||\"\",markdown:m,publishMode:i.publishMode||\"manual\"}}];"
+        }
+      },
+      {
+        "id": "2c97a170",
+        "name": "DR-Prep",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          6160,
+          200
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const A=\"YOUR_WECHAT_APPID\";const S=\"YOUR_WECHAT_APPSECRET\";const d=$input.first().json;const u=\"http://localhost:9999/cgi-bin/token?grant_type=client_credential&appid=\"+A+\"&secret=\"+S;return[{json:{tokenUrl:u,title:d.title,html:d.html,summary:d.summary,publishMode:d.publishMode}}];"
+        }
+      },
+      {
+        "id": "c54f404b",
+        "name": "DR-Token",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          6440,
+          200
+        ],
+        "parameters": {
+          "method": "GET",
+          "url": "={{ $json.tokenUrl }}",
+          "options": {
+            "timeout": 15000,
+            "retryOnFail": true,
+            "maxTries": 3
+          }
+        }
+      },
+      {
+        "id": "99e2d944",
+        "name": "DR-Body",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          6720,
+          200
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const T=\"62O3r2M8pPODxLyYa9r-FqV-cIi-WCPoWUj_nvc7SECX_LuqBFxuP8-LG4tEXscy\";const d=$input.first().json;const t=d.access_token||\"\";const b=JSON.stringify({articles:[{title:d.title||\"AI\",content:d.html||\"<p>x</p>\",thumb_media_id:T,author:\"AI写手\",digest:(d.summary||\"\").substring(0,100),content_source_url:\"\",need_open_comment:0,only_fans_can_comment:0}]});return[{json:{draftUrl:\"http://localhost:9999/cgi-bin/draft/add?access_token=\"+t,bodyJson:b,title:d.title,publishMode:d.publishMode||\"manual\"}}];"
+        }
+      },
+      {
+        "id": "c6c8f3f5",
+        "name": "DR-Draft",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          7000,
+          200
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "={{ $json.draftUrl }}",
+          "sendBody": true,
+          "specifyBody": "string",
+          "body": {
+            "bodyText": "={{ $json.bodyJson }}"
+          },
+          "options": {
+            "timeout": 30000,
+            "retryOnFail": true,
+            "maxTries": 3
+          }
+        }
+      },
+      {
+        "id": "512dd647",
+        "name": "DR-Extract",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          7280,
+          200
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const d=$input.first().json;const r=d.errcode?{draft_success:!1,error:\"WC:\"+d.errmsg}:{draft_success:!0,media_id:d.media_id};return[{json:{...r,title:d.title||\"\",publishMode:d.publishMode||\"manual\"}}];"
+        }
+      },
+      {
+        "id": "89131b8c",
+        "name": "SW-Publish",
+        "type": "n8n-nodes-base.switch",
+        "typeVersion": 3,
+        "position": [
+          7840,
+          200
+        ],
+        "parameters": {
+          "dataType": "string",
+          "dataPropertyName": "publishMode",
+          "rules": {
+            "rules": [
+              {
+                "value": "auto",
+                "output": 0
+              },
+              {
+                "value": "manual",
+                "output": 1
+              }
+            ]
+          },
+          "fallbackOutput": 1
+        }
+      },
+      {
+        "id": "21e77d80",
+        "name": "RV-Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2.1,
+        "position": [
+          8120,
+          80
+        ],
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "review-approve-v4",
+          "responseMode": "lastNode",
+          "options": {}
+        },
+        "webhookId": "v4-review"
+      },
+      {
+        "id": "9a078d8d",
+        "name": "RV-Notify",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          8400,
+          80
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "={{ $env.NOTIFY_WEBHOOK_URL || 'https://httpbin.org/post' }}",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "{\"msgtype\":\"text\",\"text\":{\"content\":\"待审核: {{ $json.title }}\"}}",
+          "options": {
+            "timeout": 15000
+          }
+        }
+      },
+      {
+        "id": "4271a823",
+        "name": "AP-Prep",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          8120,
+          320
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const A=\"YOUR_WECHAT_APPID\";const S=\"YOUR_WECHAT_APPSECRET\";const d=$input.first().json;const m=d.media_id||\"\";if(!m)return[{json:{publish_success:!1,error:\"no media_id\"}}];const u=\"http://localhost:9999/cgi-bin/token?grant_type=client_credential&appid=\"+A+\"&secret=\"+S;return[{json:{tokenUrl:u,media_id:m,title:d.title}}];"
+        }
+      },
+      {
+        "id": "09df1d17",
+        "name": "AP-Token",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          8400,
+          320
+        ],
+        "parameters": {
+          "method": "GET",
+          "url": "={{ $json.tokenUrl }}",
+          "options": {
+            "timeout": 15000
+          }
+        }
+      },
+      {
+        "id": "9e3d6a9b",
+        "name": "AP-Body",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          8680,
+          320
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const d=$input.first().json;const t=d.access_token||\"\";const b=JSON.stringify({media_id:d.media_id});return[{json:{publishUrl:\"http://localhost:9999/cgi-bin/freepublish/submit?access_token=\"+t,bodyJson:b,media_id:d.media_id,title:d.title}}];"
+        }
+      },
+      {
+        "id": "256ec7db",
+        "name": "AP-Publish",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          8960,
+          320
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "={{ $json.publishUrl }}",
+          "sendBody": true,
+          "specifyBody": "string",
+          "body": {
+            "bodyText": "={{ $json.bodyJson }}"
+          },
+          "options": {
+            "timeout": 30000
+          }
+        }
+      },
+      {
+        "id": "e77e20d6",
+        "name": "AP-Extract",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          9240,
+          320
+        ],
+        "parameters": {
+          "mode": "runOnceForAllItems",
+          "jsCode": "const d=$input.first().json;const r=d.errcode?{publish_success:!1,error:\"WC:\"+d.errmsg}:{publish_success:!0};return[{json:{...r,...d}}];"
+        }
+      },
+      {
+        "id": "d6f18ec3",
+        "name": "NF-Success",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          9520,
+          320
+        ],
+        "parameters": {
+          "method": "POST",
+          "url": "={{ $env.NOTIFY_WEBHOOK_URL || 'https://httpbin.org/post' }}",
+          "sendBody": true,
+          "specifyBody": "json",
+          "jsonBody": "{\"msgtype\":\"text\",\"text\":{\"content\":\"已发布: {{ $json.title }}\"}}",
+          "options": {
+            "timeout": 15000
+          }
+        }
+      }
+    ],
+    "connections": {
+      "WK-Schedule": {
+        "main": [
+          [
+            {
+              "node": "WK-Topics",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "WK-Webhook": {
+        "main": [
+          [
+            {
+              "node": "KB-Knowledge",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "WK-Topics": {
+        "main": [
+          [],
+          [
+            {
+              "node": "KB-Knowledge",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "A1-Build": {
+        "main": [
+          [
+            {
+              "node": "A1-HTTP",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "A1-HTTP": {
+        "main": [
+          [
+            {
+              "node": "A1-Extract",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "KB-Knowledge": {
+        "main": [
+          [
+            {
+              "node": "A1-Build",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "A2-Build": {
+        "main": [
+          [
+            {
+              "node": "A2-HTTP",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "A2-HTTP": {
+        "main": [
+          [
+            {
+              "node": "A2-Extract",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "A1-Extract": {
+        "main": [
+          [
+            {
+              "node": "A2-Build",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "A3-Build": {
+        "main": [
+          [
+            {
+              "node": "A3-HTTP",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "A3-HTTP": {
+        "main": [
+          [
+            {
+              "node": "A3-Extract",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "A2-Extract": {
+        "main": [
+          [
+            {
+              "node": "A3-Build",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "A4-Build": {
+        "main": [
+          [
+            {
+              "node": "A4-HTTP",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "A4-HTTP": {
+        "main": [
+          [
+            {
+              "node": "A4-Extract",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "A3-Extract": {
+        "main": [
+          [
+            {
+              "node": "A4-Build",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "A5-Build": {
+        "main": [
+          [
+            {
+              "node": "A5-HTTP",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "A5-HTTP": {
+        "main": [
+          [
+            {
+              "node": "A5-Extract",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "A4-Extract": {
+        "main": [
+          [
+            {
+              "node": "A5-Build",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "A6-Build": {
+        "main": [
+          [
+            {
+              "node": "A6-HTTP",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "A6-HTTP": {
+        "main": [
+          [
+            {
+              "node": "A6-Extract",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "A5-Extract": {
+        "main": [
+          [
+            {
+              "node": "A6-Build",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "A6-Extract": {
+        "main": [
+          [
+            {
+              "node": "WC-Build",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "WC-Build": {
+        "main": [
+          [
+            {
+              "node": "WC-HTTP",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "WC-HTTP": {
+        "main": [
+          [
+            {
+              "node": "WC-IF",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "WC-IF": {
+        "main": [
+          [
+            {
+              "node": "WC-Notify",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "MD-HTML",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "MD-HTML": {
+        "main": [
+          [
+            {
+              "node": "DR-Prep",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "DR-Prep": {
+        "main": [
+          [
+            {
+              "node": "DR-Token",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "DR-Token": {
+        "main": [
+          [
+            {
+              "node": "DR-Body",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "DR-Body": {
+        "main": [
+          [
+            {
+              "node": "DR-Draft",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "DR-Draft": {
+        "main": [
+          [
+            {
+              "node": "DR-Extract",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "DR-Extract": {
+        "main": [
+          [
+            {
+              "node": "SW-Publish",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "SW-Publish": {
+        "main": [
+          [
+            {
+              "node": "AP-Prep",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "RV-Notify",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "AP-Prep": {
+        "main": [
+          [
+            {
+              "node": "AP-Token",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "AP-Token": {
+        "main": [
+          [
+            {
+              "node": "AP-Body",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "AP-Body": {
+        "main": [
+          [
+            {
+              "node": "AP-Publish",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "AP-Publish": {
+        "main": [
+          [
+            {
+              "node": "AP-Extract",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "AP-Extract": {
+        "main": [
+          [
+            {
+              "node": "NF-Success",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "settings": {
+      "executionOrder": "v1"
+    },
+    "id": "wf-v4-001",
+    "createdAt": "2026-07-10T12:30:00.000Z",
+    "updatedAt": "2026-07-10T12:30:00.000Z",
+    "active": false,
+    "isArchived": false,
+    "versionId": "v4-r1",
+    "activeVersionId": null,
+    "versionCounter": 1,
+    "triggerCount": 0
+  }
+]

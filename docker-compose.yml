@@ -1,0 +1,29 @@
+﻿# ============================================
+# 微信公众号AI自动运营系统 — Docker Compose
+# 用途：启动 n8n 工作流编排服务
+# ============================================
+
+services:
+  n8n:
+    image: n8nio/n8n
+    container_name: n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_BLOCK_ENV_ACCESS_IN_NODES=false
+      - N8N_ENV_ACCESSIBLE_VARS=FASTAPI_URL
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - NODE_ENV=production
+      - N8N_DIAGNOSTICS_ENABLED=false
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./workflows:/home/node/.n8n/workflows
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+volumes:
+  n8n_data:
+    name: n8n_data

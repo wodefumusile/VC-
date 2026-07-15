@@ -1,0 +1,220 @@
+{
+  "name": "WeChat Article Auto-Publish",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "trigger-1",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://host.docker.internal:8000/api/article/generate",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "topic",
+              "value": "={{ $json.topic }}"
+            },
+            {
+              "name": "style",
+              "value": "marketing"
+            },
+            {
+              "name": "length",
+              "value": "medium"
+            },
+            {
+              "name": "author",
+              "value": "wgzxhhh"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "generate-1",
+      "name": "Generate Article",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://host.docker.internal:8000/api/article/seo",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "title",
+              "value": "={{ $json.data.title }}"
+            },
+            {
+              "name": "content_html",
+              "value": "={{ $json.data.content_html }}"
+            },
+            {
+              "name": "seo_keywords",
+              "value": "={{ $json.data.seo_keywords }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "seo-1",
+      "name": "SEO Optimize",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://host.docker.internal:8000/api/article/check",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "title",
+              "value": "={{ $json.data.optimized_title }}"
+            },
+            {
+              "name": "content_html",
+              "value": "={{ $('Generate Article').item.json.data.content_html }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "check-1",
+      "name": "Quality + Compliance",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-score",
+              "leftValue": "={{ $json.data.quality.score }}",
+              "rightValue": 70,
+              "operator": {
+                "type": "number",
+                "operation": "largerEqual"
+              }
+            },
+            {
+              "id": "cond-safe",
+              "leftValue": "={{ $json.data.compliance.safe }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "if-1",
+      "name": "Quality Gate",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1050, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://host.docker.internal:8000/api/publish/draft",
+        "method": "POST",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "title",
+              "value": "={{ $('SEO Optimize').item.json.data.optimized_title }}"
+            },
+            {
+              "name": "author",
+              "value": "={{ $('Generate Article').item.json.data.author }}"
+            },
+            {
+              "name": "summary",
+              "value": "={{ $('SEO Optimize').item.json.data.seo_description }}"
+            },
+            {
+              "name": "content_html",
+              "value": "={{ $('Generate Article').item.json.data.content_html }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "publish-1",
+      "name": "Publish Draft",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1250, 200]
+    },
+    {
+      "parameters": {
+        "content": "## Workflow Complete\n\n- Status: {{ $json.success ? 'Published' : 'Failed' }}\n- Draft ID: {{ $json.data.draft_id }}\n- Message: {{ $json.message }}",
+        "height": 300,
+        "width": 400
+      },
+      "id": "note-success",
+      "name": "Result",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [1450, 200]
+    },
+    {
+      "parameters": {
+        "content": "## Quality Gate Failed\n\nScore: {{ $json.data.quality.score }}\nSafe: {{ $json.data.compliance.safe }}\n\nIssues:\n{{ JSON.stringify($json.data.quality.issues, null, 2) }}",
+        "height": 300,
+        "width": 400
+      },
+      "id": "note-fail",
+      "name": "Rejected",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [1250, 500]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [[{"node": "Generate Article", "type": "main", "index": 0}]]
+    },
+    "Generate Article": {
+      "main": [[{"node": "SEO Optimize", "type": "main", "index": 0}]]
+    },
+    "SEO Optimize": {
+      "main": [[{"node": "Quality + Compliance", "type": "main", "index": 0}]]
+    },
+    "Quality + Compliance": {
+      "main": [[{"node": "Quality Gate", "type": "main", "index": 0}]]
+    },
+    "Quality Gate": {
+      "main": [
+        [{"node": "Publish Draft", "type": "main", "index": 0}],
+        [{"node": "Rejected", "type": "main", "index": 0}]
+      ]
+    }
+  },
+  "settings": {
+    "callerPolicy": "workflowsFromSameOwner",
+    "timezone": "Asia/Shanghai"
+  },
+  "id": "35bfbebe-f5ff-4d7d-947b-9576fa1d5d85",
+  "active": false
+}

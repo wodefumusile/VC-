@@ -1,0 +1,11 @@
+{
+  "name": "知识科普",
+  "description": "分层明显，阅读友好，适合教育/科普内容",
+  "h1_color": "#2c3e50",
+  "h2_color": "#34495e",
+  "body_color": "#444444",
+  "body_size": "16px",
+  "line_height": "2.0",
+  "img_style": "max-width:100%;border-radius:8px",
+  "footer_text": "觉得有用？分享给更多人 🚀"
+}

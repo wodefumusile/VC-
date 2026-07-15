@@ -1,0 +1,38 @@
+﻿{
+  "name": "微信公众号AI自动运营 V2",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "trigger-1",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:8000/api/v2/pipeline/run",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {"name": "topic", "value": "={{ $json.topic }}"},
+            {"name": "style", "value": "={{ $json.style || 'marketing' }}"},
+            {"name": "length", "value": "medium"},
+            {"name": "author", "value": "={{ $json.author || 'wgzxhhh' }}"},
+            {"name": "template", "value": "={{ $json.template || 'knowledge' }}"}
+          ]
+        },
+        "options": {}
+      },
+      "id": "v2-pipeline-1",
+      "name": "V2 Pipeline (Generate+Image+Format+QC+Publish)",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [500, 300]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [[{"node": "V2 Pipeline (Generate+Image+Format+QC+Publish)", "type": "main", "index": 0}]]
+    }
+  }
+}

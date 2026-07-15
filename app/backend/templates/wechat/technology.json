@@ -1,0 +1,11 @@
+{
+  "name": "科技前沿",
+  "description": "深色标题，简洁现代，适合科技/AI/技术内容",
+  "h1_color": "#1a1a2e",
+  "h2_color": "#2c3e50",
+  "body_color": "#333333",
+  "body_size": "16px",
+  "line_height": "2.0",
+  "img_style": "max-width:100%;border-radius:8px",
+  "footer_text": "🚀 科技改变未来 · 关注获取更多前沿资讯"
+}

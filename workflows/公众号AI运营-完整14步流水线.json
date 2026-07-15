@@ -1,0 +1,916 @@
+{
+  "name": "公众号AI运营-完整14步流水线",
+  "nodes": [
+    {
+      "id": "webhook",
+      "name": "① 手动输入主题",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        250,
+        200
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "article",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "webhookId": "wechat-full"
+    },
+    {
+      "id": "schedule",
+      "name": "① 定时每日9点",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        250,
+        400
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 24
+            }
+          ],
+          "triggerAtHour": 9,
+          "triggerAtMinute": 0
+        }
+      }
+    },
+    {
+      "id": "schedule-topic",
+      "name": "📋 选取选题",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        500,
+        400
+      ],
+      "parameters": {
+        "jsCode": "const topics = [\n  \"AI在制造业的5个落地场景\",\n  \"2025年数字化转型趋势分析\",\n  \"中小企业如何用好大模型\",\n  \"数据驱动决策的实操指南\",\n  \"自动化工作流的ROI计算方法\"\n];\nreturn { topic: topics[Math.floor(Math.random() * topics.length)], publishMode: \"manual\" };"
+      }
+    },
+    {
+      "id": "brand-kb",
+      "name": "② 品牌知识库",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        500,
+        200
+      ],
+      "parameters": {
+        "jsCode": "// ==========================================\n// ② 品牌知识库 - 修改这里\n// ==========================================\nconst brand = {\n  name: \"你的品牌名\",\n  slogan: \"你的Slogan\",\n  industry: \"你的行业\",\n  targetAudience: \"25-40岁职场人群\",\n  toneOfVoice: \"专业、深度\",\n  products: [\"产品A\", \"产品B\"],\n  keywords: [\"关键词1\", \"关键词2\", \"关键词3\"],\n  forbidden: [\"政治敏感\", \"虚假承诺\", \"医疗断言\"],\n  styleGuide: \"每段不超过4行，适度emoji，专业但不生硬\"\n};\n\nconst input = $input.first().json;\nconst body = input.body || input;\nconst topic = body.topic || input.topic || \"AI发展趋势\";\nconst publishMode = body.publishMode || input.publishMode || \"manual\";\n\nreturn [{\n  json: {\n    topic, publishMode, brand,\n    kbContext: `你是${brand.name}的官方公众号写手。\n品牌定位：${brand.slogan}\n所在行业：${brand.industry}\n目标用户：${brand.targetAudience}\n品牌语气：${brand.toneOfVoice}\n核心产品：${brand.products.join(\"、\")}\n写作规范：${brand.styleGuide}\n内容红线：${brand.forbidden.join(\"、\")}\n公众号平台规则：不使用诱导分享、不使用绝对化用语、不涉及医疗断言`\n  }\n}];"
+      }
+    },
+    {
+      "id": "prompt-enhance",
+      "name": "③ Prompt增强",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        750,
+        200
+      ],
+      "parameters": {
+        "jsCode": "// ③ Prompt增强\nconst ctx = $(\"② 品牌知识库\").first().json;\nreturn [{ json: { topic: ctx.topic, publishMode: ctx.publishMode, kbContext: ctx.kbContext } }];"
+      }
+    },
+    {
+      "id": "ai-structure",
+      "name": "④⑤⑥ 行业+用户+结构规划",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1000,
+        200
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.deepseek.com/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer sk-你的DeepSeek-API-Key"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "string",
+        "options": {
+          "timeout": 120000,
+          "retryOnFail": {
+            "maxTries": 2,
+            "waitBetweenTries": 30000
+          }
+        },
+        "body": "{\n  \"model\": \"deepseek-chat\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"你是资深内容策划。根据主题和品牌信息，完成行业分析、目标用户画像和文章结构规划。输出纯JSON。\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"主题：{{ $json.topic }}\\n\\n品牌信息：\\n{{ $json.kbContext }}\\n\\n请完成以下内容并输出严格JSON格式：\\n1. 行业分析（150字，当前趋势+受众关注点）\\n2. 目标用户分析（100字，核心读者特征）\\n3. 文章结构规划（5-8个章节，每章含小标题+核心要点+建议字数）\\n4. 3个备选标题（25字以内，含SEO关键词）\\n5. 5个SEO关键词\\n\\nJSON格式：\\n{\\n  \\\"industry\\\": \\\"...\\\",\\n  \\\"user\\\": \\\"...\\\",\\n  \\\"outline\\\": [{\\\"section\\\":\\\"章节名\\\",\\\"point\\\":\\\"核心要点\\\",\\\"words\\\":300}],\\n  \\\"titles\\\": [\\\"标题1\\\",\\\"标题2\\\",\\\"标题3\\\"],\\n  \\\"keywords\\\": [\\\"kw1\\\",\\\"kw2\\\"]\\n}\"\n    }\n  ],\n  \"temperature\": 0.7,\n  \"max_tokens\": 4096\n}"
+      }
+    },
+    {
+      "id": "parse-structure",
+      "name": "🔧 解析结构规划",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1250,
+        200
+      ],
+      "parameters": {
+        "jsCode": "// 解析结构规划结果\nconst r = $input.first().json;\nlet text = (r.choices||[])[0]?.message?.content || r.message?.content || \"{}\";\n\nlet structure;\ntry {\n  const cleaned = text.replace(/```json\\n?/g,\"\").replace(/```\\n?/g,\"\").trim();\n  structure = JSON.parse(cleaned);\n} catch(e) {\n  structure = { titles:[\"新文章\"], outline:[], keywords:[], industry:\"\", user:\"\" };\n}\n\nconst ctx = $(\"③ Prompt增强\").first().json;\nconst outlineText = (structure.outline||[]).map(o =>\n  `- ${o.section||o.title||\"\"}：${o.point||o.key_point||\"\"}（${o.words||o.word_count||300}字）`\n).join(\"\\n\");\n\nreturn [{\n  json: {\n    topic: ctx.topic,\n    publishMode: ctx.publishMode,\n    kbContext: ctx.kbContext,\n    selectedTitle: (structure.titles||[])[0] || \"新文章\",\n    seoKeywords: (structure.keywords||[]).join(\"、\"),\n    industry: structure.industry || \"\",\n    user: structure.user || \"\",\n    outlineText\n  }\n}];"
+      }
+    },
+    {
+      "id": "ai-content",
+      "name": "⑦ 正文生成",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1500,
+        200
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.deepseek.com/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer sk-你的DeepSeek-API-Key"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "string",
+        "options": {
+          "timeout": 180000,
+          "retryOnFail": {
+            "maxTries": 3,
+            "waitBetweenTries": 30000
+          }
+        },
+        "body": "{\n  \"model\": \"deepseek-chat\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"你是专业的公众号写手。根据大纲和品牌信息写完整文章。用Markdown格式输出：# 标题、> 摘要、## 分节。字数1200-1800。\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"品牌信息：\\n{{ $json.kbContext }}\\n\\n选定标题：{{ $json.selectedTitle }}\\nSEO关键词：{{ $json.seoKeywords }}\\n\\n行业背景：{{ $json.industry }}\\n目标用户：{{ $json.user }}\\n\\n文章大纲：\\n{{ $json.outlineText }}\\n\\n要求：\\n- 开头要有hook（数据/故事/问题开头）\\n- 文中自然融入SEO关键词\\n- 直接输出完整Markdown\"\n    }\n  ],\n  \"temperature\": 0.8,\n  \"max_tokens\": 4096\n}"
+      }
+    },
+    {
+      "id": "parse-content",
+      "name": "🔧 提取正文",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1750,
+        200
+      ],
+      "parameters": {
+        "jsCode": "// 提取正文、标题、摘要\nconst r = $input.first().json;\nlet md = (r.choices||[])[0]?.message?.content || r.message?.content || \"\";\n\nconst ctx = $(\"🔧 解析结构规划\").first().json;\nconst title = (md.match(/^#\\s+(.+)$/m)||[])[1]?.trim() || ctx.selectedTitle;\nconst summary = (md.match(/^>\\s+(.+)$/m)||[])[1]?.trim() || md.slice(0,100);\n\nreturn [{ json: { ...ctx, markdown: md, title, summary } }];"
+      }
+    },
+    {
+      "id": "ai-seo",
+      "name": "⑧ SEO优化",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2000,
+        200
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.deepseek.com/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer sk-你的DeepSeek-API-Key"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "string",
+        "options": {
+          "timeout": 120000
+        },
+        "body": "{\n  \"model\": \"deepseek-chat\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"你是SEO优化专家。优化文章标题和摘要，不改变原意。直接输出优化后的完整Markdown。\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"SEO关键词：{{ $json.seoKeywords }}\\n\\n优化要求：\\n- 标题包含核心关键词，25字以内\\n- 摘要120字以内，含长尾关键词\\n- 正文前100字出现核心关键词\\n\\n原文：\\n{{ $json.markdown }}\"\n    }\n  ],\n  \"temperature\": 0.5,\n  \"max_tokens\": 4096\n}"
+      }
+    },
+    {
+      "id": "parse-seo",
+      "name": "🔧 提取SEO结果",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2250,
+        200
+      ],
+      "parameters": {
+        "jsCode": "// 提取SEO结果\nconst r = $input.first().json;\nlet md = (r.choices||[])[0]?.message?.content || r.message?.content || \"\";\n\nconst ctx = $(\"🔧 提取正文\").first().json;\nconst title = (md.match(/^#\\s+(.+)$/m)||[])[1]?.trim() || ctx.title;\nconst summary = (md.match(/^>\\s+(.+)$/m)||[])[1]?.trim() || ctx.summary;\n\nreturn [{ json: { ...ctx, markdown: md, title, summary } }];"
+      }
+    },
+    {
+      "id": "ai-layout",
+      "name": "⑨ 图文排版建议",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2500,
+        200
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.deepseek.com/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer sk-你的DeepSeek-API-Key"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "string",
+        "options": {
+          "timeout": 60000
+        },
+        "body": "{\n  \"model\": \"deepseek-chat\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"你是公众号排版设计师。为文章推荐配图位置和搜索关键词。输出纯JSON。\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"为以下文章推荐3-5个配图位置（标注插入在哪个段落之后）和对应的Unsplash图片搜索关键词（英文）。\\n\\n{{ $json.markdown }}\\n\\n输出JSON格式：\\n{\\n  \\\"images\\\": [\\n    {\\\"position\\\": \\\"第3段后\\\", \\\"keyword\\\": \\\"AI manufacturing factory\\\", \\\"description\\\": \\\"工厂自动化场景\\\"}\\n  ]\\n}\"\n    }\n  ],\n  \"temperature\": 0.7,\n  \"max_tokens\": 2048\n}"
+      }
+    },
+    {
+      "id": "parse-layout",
+      "name": "🔧 解析配图建议",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2750,
+        200
+      ],
+      "parameters": {
+        "jsCode": "// 解析配图建议，生成Unsplash图片URL\nconst r = $input.first().json;\nlet text = (r.choices||[])[0]?.message?.content || r.message?.content || \"{}\";\n\nlet layout;\ntry {\n  const cleaned = text.replace(/```json\\n?/g,\"\").replace(/```\\n?/g,\"\").trim();\n  layout = JSON.parse(cleaned);\n} catch(e) { layout = { images: [] }; }\n\nconst ctx = $(\"🔧 提取SEO结果\").first().json;\nconst images = (layout.images || []).map(img => ({\n  position: img.position,\n  keyword: img.keyword,\n  description: img.description,\n  unsplashUrl: `https://source.unsplash.com/800x400/?${encodeURIComponent(img.keyword || \"technology\")}`\n}));\n\nreturn [{ json: { ...ctx, imageSuggestions: images } }];"
+      }
+    },
+    {
+      "id": "ai-quality",
+      "name": "⑩ AI内容质量检查",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3000,
+        200
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.deepseek.com/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer sk-你的DeepSeek-API-Key"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "string",
+        "options": {
+          "timeout": 60000
+        },
+        "body": "{\n  \"model\": \"deepseek-chat\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"你是内容质量审核员。对公众号文章按5个维度评分（每项2分，共10分）。低于6分不给过。严格输出JSON。\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"请审核以下文章：\\n\\n标题：{{ $json.title }}\\n摘要：{{ $json.summary }}\\n正文：{{ $json.markdown }}\\n\\n评分维度：\\n1. 标题吸引力（关键词、数字、悬念）\\n2. 结构完整性（引言、分节、总结）\\n3. 内容深度（数据、案例、观点）\\n4. 可读性（段落长度、句式流畅）\\n5. 品牌合规（无敏感词、无虚假承诺）\\n\\n输出JSON：\\n{\\n  \\\"score\\\": 8,\\n  \\\"passed\\\": true,\\n  \\\"details\\\": {\\\"title\\\":2,\\\"structure\\\":2,\\\"depth\\\":1,\\\"readability\\\":2,\\\"compliance\\\":1},\\n  \\\"issues\\\": [],\\n  \\\"suggestions\\\": []\\n}\"\n    }\n  ],\n  \"temperature\": 0.3,\n  \"max_tokens\": 1024\n}"
+      }
+    },
+    {
+      "id": "parse-quality",
+      "name": "🔧 解析质量评分",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3250,
+        200
+      ],
+      "parameters": {
+        "jsCode": "// 解析质量评分\nconst r = $input.first().json;\nlet text = (r.choices||[])[0]?.message?.content || r.message?.content || \"{}\";\n\nlet qa;\ntry {\n  const cleaned = text.replace(/```json\\n?/g,\"\").replace(/```\\n?/g,\"\").trim();\n  qa = JSON.parse(cleaned);\n} catch(e) {\n  qa = { score: 5, passed: true, issues: [], suggestions: [] };\n}\n\nconst ctx = $(\"🔧 解析配图建议\").first().json;\n\nreturn [{\n  json: {\n    ...ctx,\n    qualityScore: qa.score || 0,\n    qualityPassed: qa.passed !== false,\n    qualityIssues: qa.issues || [],\n    qualitySuggestions: qa.suggestions || []\n  }\n}];"
+      }
+    },
+    {
+      "id": "if-quality",
+      "name": "🔀 质量门控",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [
+        3500,
+        200
+      ],
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.qualityPassed }}",
+                    "rightValue": true,
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "passed"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.qualityPassed }}",
+                    "rightValue": false,
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "failed"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "notify-low-quality",
+      "name": "📬 低质量通知",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3750,
+        350
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.NOTIFY_WEBHOOK_URL }}",
+        "sendHeaders": true,
+        "sendBody": true,
+        "specifyBody": "string",
+        "options": {
+          "timeout": 15000
+        },
+        "body": "= JSON.stringify({ msgtype: \"text\", text: { content: \"⚠️ 文章质量不达标（\" + $json.qualityScore + \"/10）\n问题：\" + JSON.stringify($json.qualityIssues) } })"
+      }
+    },
+    {
+      "id": "wordscheck",
+      "name": "⑪ 平台违规检测",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3500,
+        50
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:8080/wordscheck",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "string",
+        "options": {
+          "timeout": 30000,
+          "onError": "continueRegularOutput"
+        },
+        "body": "= JSON.stringify({ content: ($json.title || \"\") + \"\n\" + ($json.markdown || \"\") })"
+      }
+    },
+    {
+      "id": "if-wordscheck",
+      "name": "🔀 违规检查",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        3750,
+        50
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.word_list.length > 0 }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "notify-blocked",
+      "name": "📬 违规拦截通知",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4000,
+        150
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.NOTIFY_WEBHOOK_URL }}",
+        "sendHeaders": true,
+        "sendBody": true,
+        "specifyBody": "string",
+        "options": {
+          "timeout": 15000
+        },
+        "body": "= JSON.stringify({ msgtype: \"text\", text: { content: \"🚫 文章含敏感词，已拦截！\n标题：\" + $(\"🔧 解析质量评分\").first().json.title } })"
+      }
+    },
+    {
+      "id": "format-html",
+      "name": "⑫ 生成公众号HTML",
+      "type": "n8n-nodes-wechat-md.weChatMarkdown",
+      "typeVersion": 1,
+      "position": [
+        4000,
+        -50
+      ],
+      "parameters": {
+        "markdown": "={{ $(\"🔧 解析质量评分\").first().json.markdown }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "create-draft",
+      "name": "⑬ 保存草稿",
+      "type": "n8n-nodes-wechat-official.wechatOfficialAccount",
+      "typeVersion": 1,
+      "position": [
+        4250,
+        -50
+      ],
+      "parameters": {
+        "resource": "draft",
+        "operation": "add",
+        "title": "={{ $(\"🔧 解析质量评分\").first().json.title }}",
+        "content": "={{ $json.html }}",
+        "digest": "={{ $(\"🔧 解析质量评分\").first().json.summary }}",
+        "author": "你的公众号作者名"
+      },
+      "credentials": {
+        "wechatOfficialAccountCredentialsApi": {
+          "id": "wx-test-cred-001",
+          "name": "WeChat Test Account"
+        }
+      }
+    },
+    {
+      "id": "switch-mode",
+      "name": "🔀 发布模式",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [
+        4500,
+        -50
+      ],
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.publishMode }}",
+                    "rightValue": "auto",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "auto"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.publishMode }}",
+                    "rightValue": "manual",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "manual"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "auto-publish",
+      "name": "🤖 自动发布",
+      "type": "n8n-nodes-wechat-official.wechatOfficialAccount",
+      "typeVersion": 1,
+      "position": [
+        4750,
+        -100
+      ],
+      "parameters": {
+        "resource": "draft",
+        "operation": "publish",
+        "mediaId": "={{ $json.media_id }}"
+      },
+      "credentials": {
+        "wechatOfficialAccountCredentialsApi": {
+          "id": "wx-test-cred-001",
+          "name": "WeChat Test Account"
+        }
+      }
+    },
+    {
+      "id": "notify-published",
+      "name": "⑭ 发布成功通知",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        5000,
+        -100
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.NOTIFY_WEBHOOK_URL }}",
+        "sendHeaders": true,
+        "sendBody": true,
+        "specifyBody": "string",
+        "options": {
+          "timeout": 15000
+        },
+        "body": "= JSON.stringify({ msgtype: \"text\", text: { content: \"✅ 文章已自动发布！\n标题：\" + $(\"🔧 解析质量评分\").first().json.title + \"\n评分：\" + $(\"🔧 解析质量评分\").first().json.qualityScore + \"/10\" } })"
+      }
+    },
+    {
+      "id": "notify-review",
+      "name": "⑭ 审核通知",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4750,
+        100
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.NOTIFY_WEBHOOK_URL }}",
+        "sendHeaders": true,
+        "sendBody": true,
+        "specifyBody": "string",
+        "options": {
+          "timeout": 15000
+        },
+        "body": "= JSON.stringify({ msgtype: \"text\", text: { content: \"📝 新文章草稿已生成\n标题：\" + $(\"🔧 解析质量评分\").first().json.title + \"\n评分：\" + $(\"🔧 解析质量评分\").first().json.qualityScore + \"/10\n请到公众号后台审核发布\" } })"
+      }
+    }
+  ],
+  "connections": {
+    "① 手动输入主题": {
+      "main": [
+        [
+          {
+            "node": "② 品牌知识库",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "① 定时每日9点": {
+      "main": [
+        [
+          {
+            "node": "📋 选取选题",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📋 选取选题": {
+      "main": [
+        [
+          {
+            "node": "② 品牌知识库",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "② 品牌知识库": {
+      "main": [
+        [
+          {
+            "node": "③ Prompt增强",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "③ Prompt增强": {
+      "main": [
+        [
+          {
+            "node": "④⑤⑥ 行业+用户+结构规划",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "④⑤⑥ 行业+用户+结构规划": {
+      "main": [
+        [
+          {
+            "node": "🔧 解析结构规划",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔧 解析结构规划": {
+      "main": [
+        [
+          {
+            "node": "⑦ 正文生成",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "⑦ 正文生成": {
+      "main": [
+        [
+          {
+            "node": "🔧 提取正文",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔧 提取正文": {
+      "main": [
+        [
+          {
+            "node": "⑧ SEO优化",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "⑧ SEO优化": {
+      "main": [
+        [
+          {
+            "node": "🔧 提取SEO结果",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔧 提取SEO结果": {
+      "main": [
+        [
+          {
+            "node": "⑨ 图文排版建议",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "⑨ 图文排版建议": {
+      "main": [
+        [
+          {
+            "node": "🔧 解析配图建议",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔧 解析配图建议": {
+      "main": [
+        [
+          {
+            "node": "⑩ AI内容质量检查",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "⑩ AI内容质量检查": {
+      "main": [
+        [
+          {
+            "node": "🔧 解析质量评分",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔧 解析质量评分": {
+      "main": [
+        [
+          {
+            "node": "🔀 质量门控",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔀 质量门控": {
+      "main": [
+        [
+          {
+            "node": "⑪ 平台违规检测",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "📬 低质量通知",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "⑪ 平台违规检测": {
+      "main": [
+        [
+          {
+            "node": "🔀 违规检查",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔀 违规检查": {
+      "main": [
+        [
+          {
+            "node": "📬 违规拦截通知",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "⑫ 生成公众号HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "⑫ 生成公众号HTML": {
+      "main": [
+        [
+          {
+            "node": "⑬ 保存草稿",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "⑬ 保存草稿": {
+      "main": [
+        [
+          {
+            "node": "🔀 发布模式",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔀 发布模式": {
+      "main": [
+        [
+          {
+            "node": "🤖 自动发布",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "⑭ 审核通知",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🤖 自动发布": {
+      "main": [
+        [
+          {
+            "node": "⑭ 发布成功通知",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "公众号"
+    },
+    {
+      "name": "AI"
+    },
+    {
+      "name": "完整版"
+    }
+  ],
+  "id": "wf-wechat-ai-14steps-v1"
+}

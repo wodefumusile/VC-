@@ -1,0 +1,4 @@
+﻿# publish-engine 依赖
+
+playwright>=1.45.0
+loguru>=0.7.0

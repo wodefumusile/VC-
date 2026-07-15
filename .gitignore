@@ -1,0 +1,103 @@
+# ============================================
+# Secrets & credentials
+# ============================================
+.env
+.env.backup
+*cred*.json
+auth_state.json
+
+# ============================================
+# Runtime artifacts
+# ============================================
+*.log
+logs/
+app/logs/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+*.db-shm
+*.db-wal
+
+# ============================================
+# User data
+# ============================================
+app/storage/articles.db
+backup/*
+data/*
+app/publish_engine/storage/screenshots/
+
+# ============================================
+# Dev tools
+# ============================================
+node_modules/
+.DS_Store
+Thumbs.db
+*.tmp
+*.bak
+
+# ============================================
+# Docker volumes
+# ============================================
+n8n/credentials/
+n8n/workflows/
+
+# ============================================
+# Debug scripts (dev only)
+# ============================================
+check_*.js
+debug_*.js
+dump_*.js
+fix_*.js
+test_*.js
+patch_*.js
+decode*.js
+err*.js
+verify*.js
+try_*.js
+force_*.js
+grep_*.js
+list_*.js
+point_*.js
+import_*.js
+restore_*.js
+replace_*.js
+update_*.js
+create*.js
+delete_*.js
+archive_*.js
+back_*.js
+build_*.js
+bypass_*.js
+add_*.js
+gen.py
+node_info.js
+get_nodes.js
+check_n8n.js
+detail99.js
+dump110.js
+patch_check.js
+patch_wf.js
+temp_parse.json
+test-*.json
+test8.json
+workflow-fresh.json
+workflow-fixed-v2.json
+workflow-v3*.json
+workflow-v4.json
+workflow-v5*.json
+wf-export.json
+n8n-*.json
+httpbin_debug.js
+httpbin_test*.js
+httpbin8.js
+
+# ============================================
+# IDE
+# ============================================
+.idea/
+.vscode/
+*.swp
+*.swo
+*.env.backup
+*.env.env.backup
