@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass, field, asdict
 from typing import Optional
+from __future__ import annotations
 
 
 @dataclass

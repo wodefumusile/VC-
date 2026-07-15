@@ -1,100 +1,81 @@
 @echo off
-chcp 65001 >nul
-title 公众号AI运营系统 - 一键安装
+title WeChat AI Publisher - Install
 cd /d "%~dp0"
 
-echo.
 echo ============================================
-echo   公众号AI智能运营系统 V2.2.3 - 安装向导
+echo   WeChat AI Publisher V2.2.4 - Install
 echo ============================================
 echo.
 
-echo [1/6] 检查 Python 环境...
+echo [1/6] Checking Python...
 python --version >nul 2>&1
 if %errorlevel% neq 0 (
-    echo [X] 未检测到 Python！请先安装 Python 3.12+
-    echo 下载: https://www.python.org/downloads/
+    echo [FAIL] Python not found! Install Python 3.10+ first.
+    echo        Download: https://www.python.org/downloads/
     pause
     exit /b 1
 )
-for /f "tokens=2 delims= " %%v in ('python --version 2^>^&1') do echo    [OK] Python %%v 已就绪
+for /f "tokens=2 delims= " %%v in ('python --version 2^>^&1') do echo    [OK] Python %%v
 
-REM Check Python version >= 3.10
+echo [2/6] Checking Python version (>=3.10)...
 python -c "import sys; sys.exit(0 if sys.version_info >= (3,10) else 1)" >nul 2>&1
 if %errorlevel% neq 0 (
-    echo    [X] Python 版本过低！需要 3.10 或更高版本
+    echo    [FAIL] Python 3.10+ required! Please upgrade.
     pause
     exit /b 1
 )
-echo    [OK] Python 版本符合要求 (>=3.10)
+echo    [OK] Version OK
 
-echo [2/6] 创建 Python 虚拟环境...
+echo [3/6] Creating virtual environment...
 if not exist "venv" (
     python -m venv venv
-    echo    [OK] 虚拟环境已创建
+    echo    [OK] Created
 ) else (
-    echo    [OK] 虚拟环境已存在
+    echo    [OK] Already exists
 )
 
-echo [3/6] 安装 Python 依赖包（可能需要几分钟）...
+echo [4/6] Installing Python packages...
 venv\Scripts\python -m pip install --upgrade pip -q 2>nul
 venv\Scripts\pip install -r app\requirements.txt -q 2>nul
 if %errorlevel% neq 0 (
-    echo     正在使用清华镜像源重试...
+    echo    Retrying with mirror...
     venv\Scripts\pip install -r app\requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple -q
     if %errorlevel% neq 0 (
-        echo [X] 依赖安装失败，请检查网络连接后重新运行
+        echo    [FAIL] Cannot install packages. Check network.
         pause
         exit /b 1
     )
 )
-echo    [OK] Python 依赖安装完成
+echo    [OK] Packages installed
 
-echo [4/6] 安装浏览器引擎（用于公众号发布）...
+echo [5/6] Installing browser engine...
 venv\Scripts\playwright install chromium 2>nul
 if %errorlevel% neq 0 (
     venv\Scripts\python -m playwright install chromium
-    if %errorlevel% neq 0 (
-        echo [!] Chromium 安装失败（发布功能可能不可用）
-    )
+    if %errorlevel% neq 0 echo    [!] Browser install failed (publish may not work)
 )
-echo    [OK] 浏览器引擎就绪
+echo    [OK] Browser ready
 
-echo [5/6] 初始化配置文件...
+echo [6/6] Initializing config...
 if not exist "app\.env" (
     copy "app\.env.example" "app\.env" >nul
-    echo    [OK] .env 配置文件已创建（请稍后填入 API Key）
+    echo    [OK] Created app\.env (fill in API keys)
 ) else (
-    echo    [OK] .env 配置文件已存在（跳过）
+    echo    [OK] app\.env exists
 )
-if not exist "logs" mkdir logs >nul 2>&1
-if not exist "data" mkdir data >nul 2>&1
-if not exist "backup" mkdir backup >nul 2>&1
 if not exist "app\logs" mkdir app\logs >nul 2>&1
-echo    [OK] 目录结构就绪
-
-echo [6/6] 检查 Docker（可选）...
-docker --version >nul 2>&1
-if %errorlevel% neq 0 (
-    echo    [!] 未安装 Docker（可选，不影响核心功能）
-) else (
-    echo    [OK] Docker 已就绪
-)
+if not exist "logs" mkdir logs >nul 2>&1
+echo    [OK] Directories ready
 
 echo.
 echo ============================================
-echo   安装完成！
+echo   INSTALL COMPLETE!
 echo ============================================
 echo.
-echo   [重要] 配置 API 密钥：
-echo     1. 用记事本打开 app\.env 文件
-echo     2. 填入 DeepSeek API Key
-echo     3. 如需 AI 生图，填入火山方舟 API Key
-echo     4. 保存文件
+echo   1. Edit app\.env and enter your API keys
+echo   2. Double-click start.bat to launch
+echo   3. Open http://localhost:8000
 echo.
-echo   [启动] 双击「一键启动.bat」
-echo   [访问] http://localhost:8000
-echo.
-echo   详细教程请查看 docs\\客户安装教程_v2.2.2.md
+echo   Guides: install-guide.docx / user-manual.docx
 echo.
 pause

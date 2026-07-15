@@ -131,7 +131,8 @@ class BrowserManager:
             ],
         }
         try:
-            self._context = pw.chromium.launch_persistent_context(**launch_kwargs)
+            self._context = pw.chromium.launch_persistent_context(
+            chromium_sandbox=True,**launch_kwargs)
             self._context.add_init_script("""
                 Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
             """)
