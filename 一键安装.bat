@@ -86,4 +86,6 @@ echo.
 echo   [启动] 双击「一键启动.bat」
 echo   [访问] http://localhost:8000
 echo.
+echo   详细教程请查看 docs\\客户安装教程_v2.2.2.md
+echo.
 pause
