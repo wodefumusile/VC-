@@ -7,6 +7,8 @@ Tables:
   - article_images (v2.0): AI-generated image records
 """
 
+from __future__ import annotations
+
 import sqlite3
 import uuid
 from datetime import datetime, timezone
@@ -14,7 +16,6 @@ from pathlib import Path
 from enum import Enum
 from loguru import logger
 from backend.config import settings
-from __future__ import annotations
 
 
 class TaskStatus(str, Enum):
@@ -38,7 +39,7 @@ class Database:
     """SQLite database manager (singleton)"""
 
     def __init__(self, db_path: Path = None):
-        self.db_path = db_path or settings.ROOT_DIR / "storage" / "articles.db"
+        self.db_path = db_path or settings.STORAGE_DIR / "articles.db"
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self._conn = None
         self._init_db()

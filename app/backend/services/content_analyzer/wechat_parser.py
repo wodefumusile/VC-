@@ -1,4 +1,7 @@
 """微信公众号文章解析器 — 通过 Playwright 抓取文章页面内容"""
+
+from __future__ import annotations
+
 import re
 import asyncio
 from dataclasses import dataclass, field
@@ -126,7 +129,6 @@ def parse_wechat_static(url: str) -> dict | None:
             article.summary = article.content[:200]
             article.image_count = len(content_div.find_all("img"))
             from collections import Counter
-from __future__ import annotations
             words = re.findall(r'[\u4e00-\u9fa5]{2,4}', article.content)
             article.keywords = [w for w, _ in Counter(words).most_common(10) if len(w) >= 2]
 

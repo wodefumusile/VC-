@@ -10,7 +10,6 @@ from loguru import logger
 
 from publish_engine.browser.browser_manager import BrowserManager
 from publish_engine.browser.config import USER_DATA_DIR
-from __future__ import annotations
 
 
 class PlaywrightService:
@@ -38,6 +37,20 @@ class PlaywrightService:
         logger.info("Playwright dedicated thread started")
         self._manager = BrowserManager()
         self._manager.start()
+
+        # Navigate Chrome to the Web UI dashboard — single window for everything
+        try:
+            page = self._manager.new_page()
+            page.goto("http://127.0.0.1:8000", wait_until="domcontentloaded", timeout=10000)
+            self._last_page = page
+            # Close initial about:blank page so only dashboard remains
+            for p in self._manager.context.pages:
+                if p != page and (p.url == "about:blank" or p.url == ""):
+                    p.close()
+            logger.info("Dashboard opened in Chrome")
+        except Exception as e:
+            logger.warning("Failed to open dashboard in Chrome: {}", e)
+
         logger.success("PlaywrightService ready | profile={}", USER_DATA_DIR)
         while True:
             item = self._queue.get()

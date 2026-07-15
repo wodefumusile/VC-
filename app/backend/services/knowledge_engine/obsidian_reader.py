@@ -7,12 +7,13 @@ Obsidian Markdown Reader — 读取 Obsidian vault 的 Markdown 文件池
 - 提取纯文本内容（去 Markdown 标记）
 """
 
+from __future__ import annotations
+
 import os
 import re
 from pathlib import Path
 from typing import Optional
 from loguru import logger
-from __future__ import annotations
 
 
 class ObsidianReader:

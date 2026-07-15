@@ -1,8 +1,9 @@
 """HTML Cleaner — normalizes input from Markdown / HTML / plain text to clean HTML."""
 
+from __future__ import annotations
+
 import re
 from loguru import logger
-from __future__ import annotations
 
 
 def normalize_input(text: str) -> tuple[str, str]:

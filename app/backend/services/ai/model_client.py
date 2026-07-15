@@ -64,6 +64,15 @@ class ModelClient:
             logger.exception("AI API 调用失败")
             raise RuntimeError(f"AI API 调用失败: {str(e)}") from e
 
+    def reset_client(self):
+        """Re-create the OpenAI client with current settings (for hot-reload)."""
+        self.client = OpenAI(
+            api_key=settings.AI_API_KEY,
+            base_url=settings.AI_BASE_URL,
+        )
+        self.model = settings.AI_MODEL
+        logger.info("ModelClient reset | base_url={} | model={}", settings.AI_BASE_URL, settings.AI_MODEL)
+
 
 # 全局单例
 model_client = ModelClient()

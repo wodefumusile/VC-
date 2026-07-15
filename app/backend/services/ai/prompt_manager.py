@@ -4,10 +4,11 @@ Prompt Manager
 Loads style-specific prompt templates from prompts/ directory.
 """
 
+from __future__ import annotations
+
 from pathlib import Path
 from loguru import logger
 from backend.config import settings
-from __future__ import annotations
 
 
 STYLE_MAP = {

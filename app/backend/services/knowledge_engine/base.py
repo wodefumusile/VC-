@@ -5,10 +5,11 @@ Knowledge Engine — 知识库抽象层
 未来可扩展为 Embedding/RAG 实现。
 """
 
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Optional
-from __future__ import annotations
 
 
 @dataclass

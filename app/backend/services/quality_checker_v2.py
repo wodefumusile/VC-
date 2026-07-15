@@ -4,9 +4,10 @@ Checks content, images, and HTML structure before publishing.
 Independent from v1.0 quality_checker.
 """
 
+from __future__ import annotations
+
 import re
 from loguru import logger
-from __future__ import annotations
 
 
 class QualityCheckerV2:

@@ -4,12 +4,13 @@ Reads template JSON, renders with section+span pattern.
 Do NOT put style on block elements (p, h2, h3) — WeChat strips them.
 """
 
+from __future__ import annotations
+
 import re
 import json
 from pathlib import Path
 from loguru import logger
 from backend.config import settings
-from __future__ import annotations
 
 # Default font sizes
 WECHAT_FONT = {"h1": "22px", "h2": "18px", "h3": "16px", "body": "15px", "small": "13px"}

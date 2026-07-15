@@ -5,12 +5,13 @@ Accepts Markdown, HTML, or plain text.
 Uses section+span pattern for ProseMirror compatibility.
 """
 
+from __future__ import annotations
+
 from loguru import logger
 from .html_cleaner import normalize_input
 from .structure_analyzer import analyze_and_enhance
 from .renderer import render, load_template
 from backend.services.image_handler import image_handler
-from __future__ import annotations
 
 
 def format_article(title: str, content: str, author: str = "",

@@ -7,6 +7,8 @@ Knowledge Retriever — 关键词 + Jaccard 匹配检索器
 v2.1.1: 增加 JSON 文件缓存，增量扫描
 """
 
+from __future__ import annotations
+
 import os
 import json
 import re
@@ -15,7 +17,6 @@ from loguru import logger
 
 from .base import BaseKnowledgeEngine, KnowledgeResult, KnowledgeScanResult
 from .obsidian_reader import ObsidianReader
-from __future__ import annotations
 
 
 class KeywordJaccardRetriever(BaseKnowledgeEngine):

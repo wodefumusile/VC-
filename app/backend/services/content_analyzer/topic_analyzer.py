@@ -1,5 +1,7 @@
 """AI 选题分析 Agent — 基于来源内容生成选题方案"""
 
+from __future__ import annotations
+
 import json
 import re
 from loguru import logger
@@ -103,5 +105,4 @@ def generate_article_from_analysis(analysis: dict, style: str = "marketing", len
         return {"error": "无法从分析结果中提取主题，请手动输入"}
 
     from backend.services.ai import article_generator
-from __future__ import annotations
     return article_generator.generate(topic=topic, style=style, length=length)

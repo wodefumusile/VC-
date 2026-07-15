@@ -1,5 +1,7 @@
 """Article generator — v2.1.1: improved JSON parsing with Pydantic schema"""
 
+from __future__ import annotations
+
 import json
 import re
 from typing import Optional
@@ -63,7 +65,6 @@ class ArticleGenerator:
 
         try:
             from backend.services.content_formatter import get_prompt_instructions
-from __future__ import annotations
             up += "\n\n" + get_prompt_instructions()
         except ImportError:
             logger.debug("content_formatter not available for prompt enrichment")

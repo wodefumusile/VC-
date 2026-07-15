@@ -5,23 +5,17 @@ cd /d "%~dp0"
 echo Starting WeChat AI Publisher...
 echo.
 
-if not exist "venv\Scripts\python.exe" (
-    echo [FAIL] Not installed! Run install.bat first.
-    pause
-    exit /b 1
-)
-
-start "WeChat AI Publisher" /d "%~dp0app" cmd /c "..\venv\Scripts\python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000"
+start "WeChat AI Publisher" /d "%~dp0app" cmd /c "python -m backend.main"
 
 timeout /t 5 >nul
 
 echo.
-echo ============================================
-echo   Server started!
-echo ============================================
+echo ========================================
+echo   System started!
+echo ========================================
 echo.
-echo   Open: http://localhost:8000
-echo   Stop: run stop.bat
+echo   Dashboard will open in Chrome window
 echo.
-start http://localhost:8000
+echo   Run Stop.bat to shut down
+echo.
 pause

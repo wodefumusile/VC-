@@ -1,0 +1,538 @@
+﻿WEB_PAGE_HTML = r"""
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>鍏紬鍙稟I杩愯惀绯荤粺 v2.1.3</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"Microsoft YaHei","寰蒋闆呴粦",sans-serif;background:#f0f2f5;display:flex;min-height:100vh}
+.sidebar{width:220px;background:#1a1a2e;color:#fff;padding:24px 0;flex-shrink:0;display:flex;flex-direction:column}
+.sidebar .logo{font-size:18px;font-weight:bold;padding:0 20px 30px;color:#7c83ff}
+.sidebar nav{flex:1}
+.sidebar nav a{display:flex;align-items:center;gap:10px;padding:12px 20px;color:#a0a3b1;text-decoration:none;font-size:14px;transition:.2s}
+.sidebar nav a:hover,.sidebar nav a.active{background:#252540;color:#fff}
+.sidebar .version{padding:16px 20px;font-size:11px;color:#555;border-top:1px solid #252540}
+.main{flex:1;padding:24px 32px;overflow-y:auto;max-height:100vh}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}
+.header h2{font-size:22px;color:#1a1a2e}
+.badge{background:#7c83ff20;color:#7c83ff;padding:4px 12px;border-radius:20px;font-size:12px}
+.card{background:#fff;border-radius:12px;padding:24px;margin-bottom:20px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.card h3{font-size:16px;color:#333;margin-bottom:16px}
+.form-row{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px;align-items:flex-end}
+.form-group{display:flex;flex-direction:column;flex:1;min-width:180px}
+.form-group label{font-size:13px;color:#666;margin-bottom:6px;font-weight:bold}
+.form-group input,.form-group select{padding:10px 14px;font-size:14px;border:1px solid #ddd;border-radius:8px;font-family:inherit;background:#fafafa}
+.form-group input:focus,.form-group select:focus{outline:none;border-color:#7c83ff;background:#fff}
+.btn{padding:10px 24px;border-radius:8px;font-size:14px;font-weight:bold;cursor:pointer;border:none;transition:.2s;font-family:inherit}
+.btn-primary{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff}
+.btn-primary:hover{opacity:.9}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed}
+.btn-outline{border:1px solid #ddd;background:#fff;color:#666}
+.btn-outline:hover{background:#f5f5f5}
+.btn-sm{padding:6px 16px;font-size:13px}
+.btn-xs{padding:4px 12px;font-size:12px}
+.btn-danger{border:1px solid #f44336;background:#fff;color:#f44336}
+.btn-danger:hover{background:#fee}
+.progress-wrap{margin-top:24px;display:none}
+.progress-bar{width:100%;height:8px;background:#eee;border-radius:4px;overflow:hidden;margin-bottom:8px}
+.progress-fill{height:100%;background:linear-gradient(90deg,#667eea,#764ba2);border-radius:4px;transition:width .5s;width:0%}
+.progress-text{font-size:13px;color:#666;display:flex;justify-content:space-between}
+.progress-label{display:flex;align-items:center;gap:6px}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid #ccc;border-top-color:#7c83ff;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.result{margin-top:20px;padding:20px;background:#f8f9fa;border-radius:10px;border-left:4px solid #7c83ff;display:none}
+.result h4{font-size:17px;color:#333;margin-bottom:8px}
+.result .sum{color:#666;line-height:1.8;margin-bottom:12px;font-size:14px}
+.tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.tag{padding:4px 12px;border-radius:20px;font-size:12px}
+.tag-score{background:#e8f5e9;color:#2e7d32}
+.tag-safe{background:#e3f2fd;color:#1565c0}
+.tag-keyword{background:#fff3e0;color:#e65100}
+.error-alert{margin-top:16px;padding:14px;background:#fff3f3;border-radius:8px;color:#d93025;font-size:14px;display:none}
+.task-list{width:100%;border-collapse:collapse}
+.task-list th{text-align:left;padding:10px 14px;font-size:13px;color:#999;border-bottom:1px solid #eee}
+.task-list td{padding:12px 14px;font-size:14px;border-bottom:1px solid #f5f5f5}
+.task-list tr:hover td{background:#fafafa}
+.task-list .status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
+.status-done{background:#4caf50}.status-fail{background:#f44336}.status-running{background:#ff9800}.status-wait{background:#bdbdbd}
+.empty{text-align:center;color:#999;padding:30px;font-size:14px}
+.mode-switch{display:flex;gap:0;margin-bottom:20px;border-radius:8px;overflow:hidden;border:1px solid #ddd;width:fit-content}
+.mode-btn{padding:8px 20px;font-size:13px;border:none;background:#fff;color:#666;cursor:pointer;font-family:inherit;transition:.2s}
+.mode-btn.active{background:#7c83ff;color:#fff}
+#linkMode{display:none}
+.status-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:bold}
+.status-ok{background:#e8f5e9;color:#2e7d32}
+.status-err{background:#fff3f3;color:#d93025}
+.status-pending{background:#fff8e1;color:#f57c00}
+.article-preview{max-height:500px;overflow-y:auto;border:1px solid #eee;border-radius:8px;padding:20px;background:#fafafa;line-height:1.8;font-size:14px}
+.article-preview h2{font-size:18px;margin:16px 0 8px}
+.article-preview p{margin:8px 0;color:#444}
+.article-preview img{max-width:100%;border-radius:6px;margin:12px 0}
+.article-preview blockquote{border-left:3px solid #7c83ff;padding:8px 16px;margin:12px 0;background:#f0f4ff;color:#555}
+.onboarding{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:1000}
+.onboarding-card{background:#fff;border-radius:16px;padding:40px;max-width:480px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.onboarding-card h2{font-size:22px;color:#1a1a2e;margin-bottom:8px}
+.onboarding-card .step-num{width:40px;height:40px;border-radius:50%;background:#7c83ff20;color:#7c83ff;display:inline-flex;align-items:center;justify-content:center;font-size:18px;font-weight:bold;margin-bottom:16px}
+.onboarding-card p{color:#666;margin:8px 0 20px;line-height:1.6}
+.steps-dots{display:flex;gap:6px;justify-content:center;margin:16px 0}
+.steps-dots span{width:8px;height:8px;border-radius:50%;background:#ddd}
+.steps-dots span.active{background:#7c83ff}
+.toast{position:fixed;top:20px;right:20px;padding:12px 24px;border-radius:8px;font-size:14px;z-index:2000;animation:slideIn .3s ease;box-shadow:0 4px 12px rgba(0,0,0,.15)}
+.toast-ok{background:#e8f5e9;color:#2e7d32}
+.toast-err{background:#fff3f3;color:#d93025}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+.img-grid{display:flex;gap:12px;flex-wrap:wrap;margin:12px 0}
+.img-card{width:120px;border-radius:8px;overflow:hidden;background:#f5f5f5;text-align:center;font-size:11px}
+.img-card img{width:100%;height:80px;object-fit:cover}
+.img-card span{display:block;padding:4px 6px;color:#666}
+.config-status{display:flex;align-items:center;gap:12px;padding:10px 0}
+.mode-indicator{display:inline-flex;align-items:center;gap:6px;padding:4px 14px;border-radius:20px;font-size:12px;font-weight:bold;margin-left:12px}
+.mode-full{background:#e8f5e9;color:#2e7d32}
+.mode-text{background:#fff8e1;color:#f57c00}
+</style>
+</head>
+<body>
+
+<!-- ONBOARDING -->
+<div id="onboarding" class="onboarding" style="display:flex">
+<div class="onboarding-card" id="onboardingCard">
+  <div class="step-num" id="onStepNum">1</div>
+  <h2 id="onTitle">娆㈣繋浣跨敤鍏紬鍙稟I杩愯惀绯荤粺</h2>
+  <p id="onDesc">璁╂垜浠敤2鍒嗛挓瀹屾垚閰嶇疆锛屽紑濮嬩綘鐨勭涓€绡嘇I鏂囩珷銆?/p>
+  <div class="steps-dots" id="onDots"><span class="active"></span><span></span><span></span><span></span></div>
+  <button class="btn btn-primary" onclick="onboardingNext()" id="onBtn">寮€濮嬮厤缃?/button>
+  <button class="btn btn-outline btn-sm" onclick="skipOnboarding()" style="margin-top:8px">璺宠繃锛屾垜鐔熸倝鎿嶄綔</button>
+</div>
+</div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo">馃殌 鍏紬鍙稟I杩愯惀</div>
+  <nav>
+    <a href="#" class="active" onclick="showPage('create')" id="navCreate">鉁忥笍 鏂囩珷鐢熸垚</a>
+    <a href="#" onclick="showPage('history')" id="navHistory">馃搵 浠诲姟璁板綍</a>
+    <a href="#" onclick="showPage('config')" id="navConfig">鈿欙笍 绯荤粺閰嶇疆</a>
+  </nav>
+  <div class="version">v2.1.3 路 鏈湴杩愯</div>
+</aside>
+
+<main class="main">
+
+<!-- PAGE: CREATE -->
+<div id="pageCreate">
+<div class="header"><h2>鉁忥笍 鍒涘缓鏂囩珷浠诲姟</h2><div style="display:flex;align-items:center;gap:8px"><span class="mode-indicator mode-text" id="modeIndicator">馃煛 绾枃鏈ā寮?/span><span class="badge">v2.1.3</span></div></div>
+<div class="card">
+<h3>馃幆 閫夋嫨鐢熸垚鏂瑰紡</h3>
+<div class="mode-switch">
+<button class="mode-btn active" onclick="switchMode('topic')" id="modeTopic">馃摑 杈撳叆涓婚</button>
+<button class="mode-btn" onclick="switchMode('link')" id="modeLink">馃敆 鏍规嵁閾炬帴</button>
+</div>
+<div id="topicMode">
+<div class="form-row">
+<div class="form-group" style="flex:2"><label>鏂囩珷涓婚</label><input type="text" id="topic" placeholder="杈撳叆浣犳兂鍐欑殑涓婚..."></div>
+<div class="form-group"><label>椋庢牸</label><select id="style"><option value="marketing">钀ラ攢鎺ㄥ箍</option><option value="science">绉戞櫘鐭ヨ瘑</option><option value="case_study">妗堜緥鍒嗘瀽</option><option value="branding">鍝佺墝鏁呬簨</option></select></div>
+<div class="form-group"><label>闀垮害</label><select id="length"><option value="short">鐭枃</option><option value="medium" selected>涓瘒</option><option value="long">闀挎枃</option></select></div>
+</div>
+<button class="btn btn-primary" id="btnGenerate" onclick="submitTask()">馃殌 涓€閿敓鎴愬苟鍙戝竷</button>
+</div>
+<div id="linkMode">
+<div class="form-row">
+<div class="form-group"><label>寰俊鍏紬鍙烽摼鎺?/label><input type="url" id="wechatUrl" placeholder="https://mp.weixin.qq.com/s/..."></div>
+<div class="form-group"><label>鎶栭煶閾炬帴</label><input type="url" id="douyinUrl" placeholder="https://v.douyin.com/..."></div>
+</div>
+<button class="btn btn-primary" onclick="submitTask()">馃殌 鏅鸿兘鐢熸垚</button>
+</div>
+</div>
+<div class="progress-wrap" id="progressWrap">
+<div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+<div class="progress-text"><span class="progress-label"><span class="spin" id="spinIcon" style="display:none"></span><span id="progressMsg">鍑嗗涓?..</span></span><span id="progressPct">0%</span></div>
+</div>
+<div class="error-alert" id="errorAlert"></div>
+<div class="result" id="resultBox">
+<div style="display:flex;justify-content:space-between;align-items:center">
+<h4 id="resultTitle" style="margin-bottom:0">鈥?/h4>
+<button class="btn btn-primary btn-sm" id="btnViewArticle" onclick="viewArticle()" style="display:none">馃搫 鏌ョ湅姝ｆ枃</button>
+</div>
+<div class="sum" id="resultSummary" style="margin:8px 0"></div>
+<div class="tags">
+<span class="tag tag-score" id="resultScore"></span>
+<span class="tag tag-safe" id="resultSafe"></span>
+<span class="tag tag-keyword" id="resultKeywords"></span>
+</div>
+</div>
+</div>
+
+<!-- PAGE: HISTORY -->
+<div id="pageHistory" style="display:none">
+<div class="header"><h2>馃搵 浠诲姟璁板綍</h2><button class="btn btn-outline btn-sm" onclick="loadHistory()">馃攧 鍒锋柊</button></div>
+<div class="card"><div id="historyContent"><div class="empty">鍔犺浇涓?..</div></div></div>
+</div>
+
+<!-- PAGE: CONFIG (enhanced v2.1.3) -->
+<div id="pageConfig" style="display:none">
+<div class="header"><h2>鈿欙笍 绯荤粺閰嶇疆</h2><span class="badge">v2.1.3</span></div>
+
+<div class="card">
+<h3>馃攽 DeepSeek AI</h3>
+<div class="form-row">
+<div class="form-group" style="flex:2"><label>API Key</label><input type="password" id="cfgAiKey" placeholder="sk-..."></div>
+<div class="form-group" style="max-width:160px"><label>鐘舵€?/label><span class="status-badge status-pending" id="aiStatus">鈴?鏈祴璇?/span></div>
+</div>
+<div style="display:flex;gap:10px;align-items:center">
+<button class="btn btn-outline btn-sm" onclick="testAiKey()">馃攳 娴嬭瘯杩炴帴</button>
+<span style="font-size:12px;color:#999" id="aiTestResult"></span>
+</div>
+</div>
+
+<div class="card">
+<h3>馃帹 鍥剧墖鐢熸垚锛堝嵆姊?AI锛?/h3>
+<div class="form-row">
+<div class="form-group" style="flex:2"><label>API Key</label><input type="password" id="cfgImageKey" placeholder="鐣欑┖鍒欒烦杩囧浘鐗囩敓鎴?></div>
+<div class="form-group" style="max-width:160px"><label>鐘舵€?/label><span class="status-badge status-pending" id="imgStatus">鈴?鏈祴璇?/span></div>
+</div>
+<div style="display:flex;gap:10px;align-items:center">
+<button class="btn btn-outline btn-sm" onclick="testImageKey()">馃攳 娴嬭瘯杩炴帴</button>
+<span style="font-size:12px;color:#999" id="imgTestResult"></span>
+</div>
+</div>
+
+<div class="card">
+<h3>馃搧 Obsidian 鐭ヨ瘑搴?/h3>
+<div class="form-row">
+<div class="form-group" style="flex:2"><label>Vault 璺緞</label><input type="text" id="cfgObsidianPath" placeholder="鐣欑┖鍒欒烦杩囩煡璇嗗簱"></div>
+</div>
+<div id="obsidianInfo" style="display:none;margin:10px 0;padding:10px 14px;background:#f0f4ff;border-radius:8px;font-size:13px">
+<span id="obsidianFileCount">馃搳 鏂囦欢: -</span>
+<span style="margin-left:16px" id="obsidianCharCount">馃摑 瀛楁暟: -</span>
+<span style="margin-left:16px" id="obsidianCacheStatus">馃捑 绫诲埆: -</span>
+</div>
+<div style="display:flex;gap:10px;align-items:center">
+<button class="btn btn-outline btn-sm" onclick="scanObsidian()">馃攧 鍚屾鐭ヨ瘑搴?/button>
+<span style="font-size:12px;color:#999" id="obsidianScanResult"></span>
+</div>
+</div>
+
+<div class="card">
+<h3>馃敡 妯″潡寮€鍏?/h3>
+<div class="form-row" style="align-items:center;gap:24px">
+<label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer"><input type="checkbox" id="cfgEnableAi" checked> AI 鐢熸垚</label>
+<label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer"><input type="checkbox" id="cfgEnableKnowledge" checked> 鐭ヨ瘑搴撳寮?/label>
+<label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer"><input type="checkbox" id="cfgEnableImage" checked> 鍥剧墖鐢熸垚</label>
+</div>
+<div style="margin-top:16px;display:flex;gap:12px">
+<button class="btn btn-primary" onclick="saveConfig()">馃捑 淇濆瓨閰嶇疆</button>
+<button class="btn btn-outline" onclick="loadConfigPage()">馃攧 閲嶆柊鍔犺浇</button>
+</div>
+<div id="configMsg" style="margin-top:12px;padding:10px 16px;border-radius:8px;font-size:13px;display:none"></div>
+</div>
+</div>
+
+<!-- PAGE: ARTICLE DETAIL (v2.1.3 new) -->
+<div id="pageArticle" style="display:none">
+<div class="header">
+<h2>馃搫 鏂囩珷璇︽儏</h2>
+<div style="display:flex;gap:8px">
+<button class="btn btn-outline btn-sm" onclick="copyArticleHTML()">馃搵 澶嶅埗HTML</button>
+<button class="btn btn-outline btn-sm" onclick="publishThisArticle()">馃摛 鍙戝竷鍒板井淇?/button>
+<button class="btn btn-outline btn-sm" onclick="showPage('history')">鈫?杩斿洖鍒楄〃</button>
+</div>
+</div>
+<div class="card">
+<h3 id="detailTitle" style="font-size:20px">鈥?/h3>
+<div class="tags" style="margin-top:10px">
+<span class="tag tag-score" id="detailScore"></span>
+<span class="tag tag-safe" id="detailSafe"></span>
+<span class="tag tag-keyword" id="detailKeywords"></span>
+</div>
+<p style="color:#999;font-size:13px;margin:8px 0" id="detailSummary"></p>
+</div>
+<div class="card">
+<h3>馃摲 鎻掑浘</h3>
+<div class="img-grid" id="detailImages"><span style="color:#999">鏃犲浘鐗?/span></div>
+</div>
+<div class="card">
+<h3>馃摑 姝ｆ枃棰勮</h3>
+<div class="article-preview" id="detailContent">鍔犺浇涓?..</div>
+</div>
+<div style="display:flex;gap:10px;margin-top:12px">
+<button class="btn btn-primary" onclick="copyArticleHTML()">馃搵 澶嶅埗HTML鍒板壀璐存澘</button>
+<button class="btn btn-danger" onclick="publishThisArticle()">馃摛 鍙戝竷鍒板井淇″叕浼楀彿</button>
+</div>
+</div>
+
+</main>
+
+<!-- TOAST -->
+<div id="toast" class="toast" style="display:none"></div>
+
+<script>
+let currentMode='topic';
+let currentArticleData=null;
+
+function showPage(page){
+  ['create','history','config','article'].forEach(p=>{
+    document.getElementById('page'+p.charAt(0).toUpperCase()+p.slice(1)).style.display=p===page?'block':'none';
+    document.getElementById('nav'+p.charAt(0).toUpperCase()+p.slice(1)).className=p===page?'active':'';
+  });
+  if(page==='history')loadHistory();
+  if(page==='config')loadConfigPage();
+}
+
+function switchMode(mode){
+  currentMode=mode;
+  document.getElementById('topicMode').style.display=mode==='topic'?'block':'none';
+  document.getElementById('linkMode').style.display=mode==='link'?'block':'none';
+  document.getElementById('modeTopic').className=mode==='topic'?'mode-btn active':'mode-btn';
+  document.getElementById('modeLink').className=mode==='link'?'mode-btn active':'mode-btn';
+  hideAll();
+}
+
+function toast(msg,ok){
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.className='toast '+(ok?'toast-ok':'toast-err');
+  el.style.display='block';setTimeout(()=>el.style.display='none',3000);
+}
+
+async function submitTask(){
+  const btn=document.getElementById('btnGenerate');btn.disabled=true;hideAll();
+  if(currentMode==='topic'){
+    const topic=document.getElementById('topic').value.trim();
+    if(!topic||topic.length<2){showError('璇疯緭鍏ユ枃绔犱富棰?);btn.disabled=false;return;}
+    showProgress('姝ｅ湪鐢熸垚鏂囩珷...');
+    try{
+      const resp=await fetch('/api/v2/pipeline/run',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({topic,style:document.getElementById('style').value,length:document.getElementById('length').value})});
+      const data=await resp.json();
+      if(!data.success){showError(data.error?.message||'璇锋眰澶辫触');btn.disabled=false;return;}
+      showTopicResult(data.data);currentArticleData=data.data;
+      btn.disabled=false;document.getElementById('progressWrap').style.display='none';
+    }catch(e){showError(e.message);btn.disabled=false;}
+  }else{
+    showProgress('姝ｅ湪鍒嗘瀽閾炬帴...');
+    const wu=document.getElementById('wechatUrl').value.trim();
+    const du=document.getElementById('douyinUrl').value.trim();
+    if(!wu&&!du){showError('璇疯緭鍏ヨ嚦灏戜竴涓摼鎺?);btn.disabled=false;return;}
+    try{
+      const resp=await fetch('/api/article/generate-from-link',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({wechat_url:wu,douyin_url:du})});
+      const data=await resp.json();
+      if(!data.success){showError(data.error?.message||'鍒嗘瀽澶辫触');btn.disabled=false;return;}
+      showTopicResult(data.data);currentArticleData=data.data;
+      btn.disabled=false;document.getElementById('progressWrap').style.display='none';
+    }catch(e){showError(e.message);btn.disabled=false;}
+  }
+}
+
+function showTopicResult(r){
+  if(!r)return;
+  document.getElementById('resultBox').style.display='block';
+  document.getElementById('resultTitle').textContent=r.title||'';
+  document.getElementById('resultSummary').textContent=r.summary||'';
+  document.getElementById('resultScore').textContent='璇勫垎: '+(r.quality?.score||'N/A');
+  document.getElementById('resultSafe').textContent='鍚堣: '+(r.compliance?.safe?'OK':'鈿狅笍');
+  let kw=r.seo_keywords||'';
+  if(r.knowledge_used)kw+=' | 鐭ヨ瘑搴撳寮?鉁?;
+  document.getElementById('resultKeywords').textContent='鍏抽敭璇? '+kw;
+  document.getElementById('btnViewArticle').style.display='inline-block';
+}
+
+function viewArticle(){
+  if(!currentArticleData)return;
+  document.getElementById('detailTitle').textContent=currentArticleData.title||'';
+  document.getElementById('detailSummary').textContent=currentArticleData.summary||'';
+  document.getElementById('detailScore').textContent='璇勫垎: '+(currentArticleData.quality?.score||'N/A');
+  document.getElementById('detailSafe').textContent='鍚堣: '+(currentArticleData.compliance?.safe?'鉁?:'鈿狅笍');
+  document.getElementById('detailKeywords').textContent='鍏抽敭璇? '+(currentArticleData.seo_keywords||'');
+  document.getElementById('detailContent').innerHTML=currentArticleData.content_html||'<p>鏃犲唴瀹?/p>';
+  let imgs='';
+  if(currentArticleData.images&&currentArticleData.images.length){
+    currentArticleData.images.forEach(img=>{if(img.image_url)imgs+='<div class="img-card"><img src="'+img.image_url+'" onerror="this.style.display=\'none\'"><span>'+(img.type||'')+'</span></div>';});
+  }
+  document.getElementById('detailImages').innerHTML=imgs||'<span style="color:#999">鏃犲浘鐗?/span>';
+  showPage('article');
+}
+
+async function loadArticleDetail(id){
+  try{
+    const resp=await fetch('/api/v2/articles/'+id);
+    const d=await resp.json();
+    if(!d.success){toast('鍔犺浇澶辫触',false);return;}
+    const a=d.data;
+    document.getElementById('detailTitle').textContent=a.title;
+    document.getElementById('detailSummary').textContent=a.summary;
+    document.getElementById('detailScore').textContent='璇勫垎: '+(a.quality_score||'N/A');
+    document.getElementById('detailContent').innerHTML=a.content_html||'<p>鏃犲唴瀹?/p>';
+    let imgs='';
+    if(a.images&&a.images.length){a.images.forEach(img=>{if(img.image_url)imgs+='<div class="img-card"><img src="'+img.image_url+'" onerror="this.style.display=\'none\'"><span>'+(img.type||'')+'</span></div>';});}
+    document.getElementById('detailImages').innerHTML=imgs||'<span style="color:#999">鏃犲浘鐗?/span>';
+    currentArticleData=a;
+  }catch(e){toast('鍔犺浇澶辫触',false);}
+}
+
+async function copyArticleHTML(){
+  const html=document.getElementById('detailContent').innerHTML;
+  try{await navigator.clipboard.writeText(html);toast('HTML 宸插鍒?,true);}catch(e){toast('澶嶅埗澶辫触',false);}
+}
+
+async function publishThisArticle(){
+  if(!currentArticleData){toast('璇峰厛鍔犺浇鏂囩珷',false);return;}
+  try{
+    const resp=await fetch('/api/publish/draft',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:currentArticleData.title,content_html:currentArticleData.content_html||document.getElementById('detailContent').innerHTML,summary:currentArticleData.summary||'',author:'wgzxhhh'})});
+    const d=await resp.json();
+    if(d.success)toast('宸叉彁浜ゅ彂甯冧换鍔?,true);else toast(d.error?.message||'鍙戝竷澶辫触',false);
+  }catch(e){toast('鍙戝竷澶辫触: '+e.message,false);}
+}
+
+function showProgress(msg){document.getElementById('progressWrap').style.display='block';document.getElementById('spinIcon').style.display='inline-block';document.getElementById('progressMsg').textContent=msg;}
+function updateProgress(pct,msg){document.getElementById('progressFill').style.width=pct+'%';document.getElementById('progressPct').textContent=pct+'%';if(msg)document.getElementById('progressMsg').textContent=msg;}
+function showError(msg){document.getElementById('errorAlert').textContent='鉂?'+msg;document.getElementById('errorAlert').style.display='block';document.getElementById('progressWrap').style.display='none';}
+function hideAll(){['progressWrap','errorAlert','resultBox'].forEach(id=>document.getElementById(id).style.display='none');document.getElementById('spinIcon').style.display='none';document.getElementById('progressFill').style.width='0%';document.getElementById('progressPct').textContent='0%';document.getElementById('btnViewArticle').style.display='none';}
+
+async function loadHistory(){
+  const el=document.getElementById('historyContent');el.innerHTML='<div class="empty">鍔犺浇涓?..</div>';
+  try{
+    const resp=await fetch('/api/tasks?limit=50');const data=await resp.json();
+    if(!data.success||!data.data.tasks.length){el.innerHTML='<div class="empty">鏆傛棤璁板綍</div>';return;}
+    let html='<table class="task-list"><tr><th>ID</th><th>涓婚</th><th>鏃堕棿</th><th>鐘舵€?/th><th>鎿嶄綔</th></tr>';
+    data.data.tasks.forEach(t=>{
+      const dm={generated:'status-done',published:'status-done',failed:'status-fail',generating:'status-running'};
+      const lm={generated:'鉁?,published:'馃摏',failed:'鉂?,generating:'鈴?};
+      html+='<tr><td>'+(t.task_id||t.id||'').substring(0,12)+'</td><td>'+(t.topic||'').substring(0,30)+'</td><td>'+(t.created_at||'').substring(0,16)+'</td><td><span class="status-dot '+(dm[t.status]||'status-wait')+'"></span>'+(lm[t.status]||t.status)+'</td><td><button class="btn btn-outline btn-xs" onclick="loadArticleDetail(\''+(t.id||'')+'\');showPage(\'article\')">鏌ョ湅</button></td></tr>';
+    });
+    html+='</table>';el.innerHTML=html;
+  }catch(e){el.innerHTML='<div class="empty">鍔犺浇澶辫触</div>';}
+}
+
+async function loadModeIndicator(){
+  try{
+    const resp=await fetch('/api/v2/config');const d=await resp.json();
+    if(d.success){
+      const el=document.getElementById('modeIndicator');
+      if(d.data.image_enabled){el.textContent='馃煝 AI瀹屾暣妯″紡';el.className='mode-indicator mode-full';}
+      else{el.textContent='馃煛 绾枃鏈ā寮?;el.className='mode-indicator mode-text';}
+    }
+  }catch(e){}
+}
+
+async function loadConfigPage(){
+  try{
+    const resp=await fetch('/api/v2/config');const d=await resp.json();
+    if(!d.success)return;
+    const c=d.data;
+    document.getElementById('cfgAiKey').value=c.ai_api_key||'';
+    document.getElementById('cfgImageKey').value=c.image_api_key||'';
+    document.getElementById('cfgObsidianPath').value=c.obsidian_path||'';
+    document.getElementById('cfgEnableAi').checked=c.enable_ai_generate;
+    document.getElementById('cfgEnableKnowledge').checked=c.enable_knowledge;
+    document.getElementById('cfgEnableImage').checked=c.enable_image;
+    if(c.obsidian_path)scanObsidian(true);
+  }catch(e){}
+}
+
+async function testAiKey(){
+  const key=document.getElementById('cfgAiKey').value.trim();
+  if(!key){toast('璇峰厛杈撳叆API Key',false);return;}
+  document.getElementById('aiTestResult').textContent='娴嬭瘯涓?..';
+  try{
+    const resp=await fetch('/api/v2/config/test-ai-key',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({api_key:key})});
+    const d=await resp.json();
+    if(d.data?.status==='success'){
+      document.getElementById('aiStatus').innerHTML='鉁?杩炴帴姝ｅ父';document.getElementById('aiStatus').className='status-badge status-ok';
+      document.getElementById('aiTestResult').textContent='鉁?Key 鏈夋晥';document.getElementById('aiTestResult').style.color='#2e7d32';
+    }else{
+      document.getElementById('aiStatus').innerHTML='鉂?杩炴帴澶辫触';document.getElementById('aiStatus').className='status-badge status-err';
+      document.getElementById('aiTestResult').textContent='鉁?'+(d.data?.message||'澶辫触');document.getElementById('aiTestResult').style.color='#d93025';
+    }
+  }catch(e){
+    document.getElementById('aiStatus').innerHTML='鉂?缃戠粶閿欒';document.getElementById('aiStatus').className='status-badge status-err';
+    document.getElementById('aiTestResult').textContent='鉁?'+e.message;document.getElementById('aiTestResult').style.color='#d93025';
+  }
+}
+
+async function testImageKey(){
+  const key=document.getElementById('cfgImageKey').value.trim();
+  if(!key){toast('璇峰厛杈撳叆鍥剧墖API Key',false);return;}
+  document.getElementById('imgTestResult').textContent='娴嬭瘯涓?..';
+  try{
+    const resp=await fetch('/api/v2/config/test-image-key',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({api_key:key})});
+    const d=await resp.json();
+    if(d.data?.status==='success'){
+      document.getElementById('imgStatus').innerHTML='鉁?杩炴帴姝ｅ父';document.getElementById('imgStatus').className='status-badge status-ok';
+      document.getElementById('imgTestResult').textContent='鉁?Key 鏈夋晥';document.getElementById('imgTestResult').style.color='#2e7d32';
+    }else{
+      document.getElementById('imgStatus').innerHTML='鉂?杩炴帴澶辫触';document.getElementById('imgStatus').className='status-badge status-err';
+      document.getElementById('imgTestResult').textContent='鉁?'+(d.data?.message||'澶辫触');document.getElementById('imgTestResult').style.color='#d93025';
+    }
+  }catch(e){
+    document.getElementById('imgStatus').innerHTML='鉂?缃戠粶閿欒';document.getElementById('imgStatus').className='status-badge status-err';
+    document.getElementById('imgTestResult').textContent='鉁?'+e.message;document.getElementById('imgTestResult').style.color='#d93025';
+  }
+}
+
+async function scanObsidian(silent){
+  const path=document.getElementById('cfgObsidianPath').value.trim();
+  if(!path){if(!silent)toast('璇峰厛杈撳叆Obsidian璺緞',false);return;}
+  if(!silent)document.getElementById('obsidianScanResult').textContent='鍚屾涓?..';
+  try{
+    await fetch('/api/v2/config',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer __ADMIN_TOKEN_PLACEHOLDER__'},body:JSON.stringify({obsidian_path:path,enable_ai:true,enable_knowledge:true,enable_image:true})});
+    const resp=await fetch('/api/v2/knowledge/scan');
+    const d=await resp.json();
+    if(d.success){
+      const s=d.data;
+      document.getElementById('obsidianInfo').style.display='block';
+      document.getElementById('obsidianFileCount').textContent='馃搳 鏂囦欢: '+s.total_files;
+      document.getElementById('obsidianCharCount').textContent='馃摑 瀛楁暟: '+(s.total_chars||0).toLocaleString();
+      document.getElementById('obsidianCacheStatus').textContent='馃捑 绫诲埆: '+Object.keys(s.categories||{}).length+' 涓?;
+      if(!silent){document.getElementById('obsidianScanResult').textContent='鉁?鍚屾瀹屾垚';document.getElementById('obsidianScanResult').style.color='#2e7d32';}
+    }else if(!silent){document.getElementById('obsidianScanResult').textContent='鉁?鎵弿澶辫触';}
+  }catch(e){if(!silent){document.getElementById('obsidianScanResult').textContent='鉁?'+e.message;document.getElementById('obsidianScanResult').style.color='#d93025';}}
+}
+
+async function saveConfig(){
+  const btn=event.target;btn.disabled=true;
+  try{
+    const resp=await fetch('/api/v2/config',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer __ADMIN_TOKEN_PLACEHOLDER__'},body:JSON.stringify({ai_api_key:document.getElementById('cfgAiKey').value.trim(),image_api_key:document.getElementById('cfgImageKey').value.trim(),obsidian_path:document.getElementById('cfgObsidianPath').value.trim(),enable_ai:document.getElementById('cfgEnableAi').checked,enable_knowledge:document.getElementById('cfgEnableKnowledge').checked,enable_image:document.getElementById('cfgEnableImage').checked})});
+    const d=await resp.json();
+    const el=document.getElementById('configMsg');el.style.display='block';
+    if(d.success){el.style.background='#e8f5e9';el.style.color='#2e7d32';el.textContent='鉁?閰嶇疆宸蹭繚瀛橈紝閲嶅惎鏈嶅姟鍚庣敓鏁?;toast('閰嶇疆宸蹭繚瀛?,true);}
+    else{el.style.background='#fff3f3';el.style.color='#d93025';el.textContent='鉂?'+(d.error?.message||'淇濆瓨澶辫触');}
+  }catch(e){const el=document.getElementById('configMsg');el.style.display='block';el.style.background='#fff3f3';el.style.color='#d93025';el.textContent='鉂?'+e.message;}
+  btn.disabled=false;
+}
+
+// ONBOARDING
+let onboardStep=0;
+const onboardSteps=[
+  {num:'1',title:'Step 1: 閰嶇疆 DeepSeek AI Key',desc:'鍓嶅線 <a href="https://platform.deepseek.com" target="_blank">platform.deepseek.com</a> 娉ㄥ唽鑾峰彇 API Key锛岀劧鍚庡～鍏ラ厤缃〉銆?,action:function(){showPage('config');}},
+  {num:'2',title:'Step 2: 閰嶇疆鍥剧墖鐢熸垚锛堝彲閫夛級',desc:'濡傞渶 AI 鑷姩閰嶅浘锛屽墠寰€鍗虫ⅵ AI 鑾峰彇 Key銆備笉闇€瑕佸彲璺宠繃銆?,action:function(){showPage('config');}},
+  {num:'3',title:'Step 3: 杩炴帴 Obsidian 鐭ヨ瘑搴擄紙鍙€夛級',desc:'濡傛灉浣跨敤 Obsidian 鍋氱瑪璁帮紝濉叆 Vault 鏂囦欢澶硅矾寰勶紝AI 灏嗗紩鐢ㄤ綘鐨勭煡璇嗗簱銆?,action:function(){showPage('config');}},
+  {num:'4',title:'Step 4: 鐢熸垚绗竴绡囨枃绔?馃帀',desc:'閰嶇疆瀹屾垚鍚庯紝鍥炲埌鏂囩珷鐢熸垚椤碉紝杈撳叆涓€涓富棰橈紝鐐瑰嚮銆屼竴閿敓鎴愩€嶅嵆鍙紒',action:function(){showPage('create');closeOnboarding();}},
+];
+function onboardingNext(){
+  onboardStep++;
+  if(onboardStep>=onboardSteps.length){closeOnboarding();return;}
+  const s=onboardSteps[onboardStep];
+  document.getElementById('onStepNum').textContent=s.num;
+  document.getElementById('onTitle').textContent=s.title;
+  document.getElementById('onDesc').innerHTML=s.desc;
+  for(let i=0;i<document.getElementById('onDots').children.length;i++)
+    document.getElementById('onDots').children[i].className=i<=onboardStep?'active':'';
+  document.getElementById('onBtn').textContent=onboardStep===3?'寮€濮嬩娇鐢?:'涓嬩竴姝?;
+  if(s.action)s.action();
+}
+function skipOnboarding(){closeOnboarding();}
+function closeOnboarding(){
+  document.getElementById('onboarding').style.display='none';
+  localStorage.setItem('onboarded','true');
+}
+
+document.addEventListener('DOMContentLoaded',function(){
+  loadModeIndicator();
+  if(localStorage.getItem('onboarded')==='true')document.getElementById('onboarding').style.display='none';
+  document.getElementById('topic').addEventListener('keydown',e=>{if(e.key==='Enter')submitTask();});
+});
+</script>
+</body>
+</html>
+
+"""

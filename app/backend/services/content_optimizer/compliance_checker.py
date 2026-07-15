@@ -12,7 +12,7 @@ LOW_RISK_CATEGORIES = {"superlative"}
 
 class ComplianceChecker:
     def __init__(self, wordlist_path: Path = None):
-        self.wordlist_path = wordlist_path or (settings.ROOT_DIR / "config" / "sensitive_words.txt")
+        self.wordlist_path = wordlist_path or (settings.EXE_DIR / "config" / "sensitive_words.txt")
         self._words: list = []
         self._load_wordlist()
 

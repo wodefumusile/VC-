@@ -1,7 +1,8 @@
-﻿import os
+﻿from __future__ import annotations
+
+import os
 """Browser config v3.0 - CDP mode support"""
 from pathlib import Path
-from __future__ import annotations
 
 ROOT_DIR = Path(__file__).resolve().parent.parent.parent
 

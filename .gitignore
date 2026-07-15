@@ -1,50 +1,10 @@
-# ============================================
-# Secrets & credentials
-# ============================================
+﻿# Secrets & credentials
 .env
-.env.backup
+*.env
 *cred*.json
-auth_state.json
+wordscheck/
 
-# ============================================
-# Runtime artifacts
-# ============================================
-*.log
-logs/
-app/logs/
-__pycache__/
-*.pyc
-*.pyo
-.pytest_cache/
-*.db-shm
-*.db-wal
-
-# ============================================
-# User data
-# ============================================
-app/storage/articles.db
-backup/*
-data/*
-app/publish_engine/storage/screenshots/
-
-# ============================================
-# Dev tools
-# ============================================
-node_modules/
-.DS_Store
-Thumbs.db
-*.tmp
-*.bak
-
-# ============================================
-# Docker volumes
-# ============================================
-n8n/credentials/
-n8n/workflows/
-
-# ============================================
-# Debug scripts (dev only)
-# ============================================
+# Debug scripts
 check_*.js
 debug_*.js
 dump_*.js
@@ -92,16 +52,28 @@ httpbin_debug.js
 httpbin_test*.js
 httpbin8.js
 
-# ============================================
-# IDE
-# ============================================
-.idea/
-.vscode/
-*.swp
-*.swo
-*.env.backup
-*.env.env.backup
+# OS
+.DS_Store
+Thumbs.db
+node_modules/
+# Large binaries
+*.exe
+app/build/
+app/dist/
 
-# Virtual environment
+# Python venv
 venv/
-.venv/
+
+# PyInstaller
+*.spec
+app/*.spec
+
+# Database files
+app/storage/*.db*
+*.db-shm
+*.db-wal
+
+# PyCache
+__pycache__/
+*.pyc
+*.env.backup

@@ -263,7 +263,7 @@ async def update_config(
     - Hot-reloads settings so changes take effect immediately.
     """
     try:
-        env_path: Path = settings.ROOT_DIR / ".env"
+        env_path: Path = settings.EXE_DIR / ".env"
 
         # Backup before write
         backup_path = env_path.with_suffix(".env.backup")

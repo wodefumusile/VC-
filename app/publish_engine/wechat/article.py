@@ -1,8 +1,9 @@
 """微信公众号 文章数据结构"""
 
+from __future__ import annotations
+
 from dataclasses import dataclass, field, asdict
 from typing import Optional
-from __future__ import annotations
 
 
 @dataclass
