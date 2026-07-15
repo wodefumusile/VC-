@@ -101,3 +101,7 @@ httpbin8.js
 *.swo
 *.env.backup
 *.env.env.backup
+
+# Virtual environment
+venv/
+.venv/
