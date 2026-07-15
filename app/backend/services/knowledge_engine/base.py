@@ -8,6 +8,7 @@ Knowledge Engine — 知识库抽象层
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Optional
+from __future__ import annotations
 
 
 @dataclass

@@ -5,7 +5,7 @@ cd /d "%~dp0"
 
 echo.
 echo ============================================
-echo   公众号AI智能运营系统 V2.2.1 - 安装向导
+echo   公众号AI智能运营系统 V2.2.3 - 安装向导
 echo ============================================
 echo.
 
@@ -18,6 +18,15 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 for /f "tokens=2 delims= " %%v in ('python --version 2^>^&1') do echo    [OK] Python %%v 已就绪
+
+REM Check Python version >= 3.10
+python -c "import sys; sys.exit(0 if sys.version_info >= (3,10) else 1)" >nul 2>&1
+if %errorlevel% neq 0 (
+    echo    [X] Python 版本过低！需要 3.10 或更高版本
+    pause
+    exit /b 1
+)
+echo    [OK] Python 版本符合要求 (>=3.10)
 
 echo [2/6] 创建 Python 虚拟环境...
 if not exist "venv" (

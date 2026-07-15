@@ -14,6 +14,7 @@ from pathlib import Path
 from enum import Enum
 from loguru import logger
 from backend.config import settings
+from __future__ import annotations
 
 
 class TaskStatus(str, Enum):

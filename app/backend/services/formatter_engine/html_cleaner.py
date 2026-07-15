@@ -2,6 +2,7 @@
 
 import re
 from loguru import logger
+from __future__ import annotations
 
 
 def normalize_input(text: str) -> tuple[str, str]:

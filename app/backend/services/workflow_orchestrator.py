@@ -125,6 +125,7 @@ async def run_pipeline(task_id, topic, style, length, author, template="knowledg
         logger.info("[Pipeline:{}] queueing publish", task_id)
 
         from backend.services.task_queue import publish_queue
+from __future__ import annotations
         pub_task_id = await publish_queue.submit(
             title=optimized_title,
             content_html=article["content_html"],

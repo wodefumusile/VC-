@@ -107,6 +107,7 @@ class PublishQueue:
             def _do_publish(page):
                 from publish_engine.auth.login import start_login
                 from publish_engine.wechat.editor import WechatEditor
+from __future__ import annotations
 
                 login_result = start_login(page, timeout=120)
                 if not login_result["success"]:

@@ -15,6 +15,7 @@ from loguru import logger
 
 from .base import BaseKnowledgeEngine, KnowledgeResult, KnowledgeScanResult
 from .obsidian_reader import ObsidianReader
+from __future__ import annotations
 
 
 class KeywordJaccardRetriever(BaseKnowledgeEngine):

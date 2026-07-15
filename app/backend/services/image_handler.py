@@ -8,6 +8,7 @@
 
 import re
 from loguru import logger
+from __future__ import annotations
 
 
 class ImageHandler:

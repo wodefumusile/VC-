@@ -9,6 +9,7 @@ import json
 from pathlib import Path
 from loguru import logger
 from backend.config import settings
+from __future__ import annotations
 
 # Default font sizes
 WECHAT_FONT = {"h1": "22px", "h2": "18px", "h3": "16px", "body": "15px", "small": "13px"}

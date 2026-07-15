@@ -6,6 +6,7 @@ Independent from v1.0 quality_checker.
 
 import re
 from loguru import logger
+from __future__ import annotations
 
 
 class QualityCheckerV2:

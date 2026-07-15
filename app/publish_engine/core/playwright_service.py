@@ -10,6 +10,7 @@ from loguru import logger
 
 from publish_engine.browser.browser_manager import BrowserManager
 from publish_engine.browser.config import USER_DATA_DIR
+from __future__ import annotations
 
 
 class PlaywrightService:

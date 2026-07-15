@@ -218,6 +218,7 @@ async def run_v2_pipeline(
         # Step 7: Publish
         logger.info("[V2Pipeline] step 7/7: queuing publish")
         from backend.services.task_queue import publish_queue
+from __future__ import annotations
         pub_task_id = await publish_queue.submit(
             title=seo_result.get("optimized_title", formatted["title"]),
             content_html=formatted["content_html"],

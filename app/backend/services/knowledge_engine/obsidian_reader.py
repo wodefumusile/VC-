@@ -12,6 +12,7 @@ import re
 from pathlib import Path
 from typing import Optional
 from loguru import logger
+from __future__ import annotations
 
 
 class ObsidianReader:
